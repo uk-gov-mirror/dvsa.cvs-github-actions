@@ -19,6 +19,9 @@ inputs:
   create-workspace:
     description: Should a new Terraform Workspace be created
     default: 'true'
+  repository:
+    description: The name of the repository
+    default: 'cvs-tf'
 
 outputs:
   changes-detected:
@@ -68,3 +71,19 @@ runs:
           plan.txt
           terraform.tfplan
         retention-days: ${{ inputs.plan-retention }}
+
+    - name: 🔓 Unlock State File
+      if: failure()
+      shell: bash
+      run: |
+        bucket=${{ inputs.repository }}${{ inputs.repository == 'cvs-tf' && '-environment' || '' }}
+        key="${bucket}/env:/${{ inputs.environment-name }}/tf_state"
+
+        lock_id=$(aws dynamodb get-item --table-name $bucket \
+          --key "{\"LockID\": {\"S\": \"$key\"}}" \
+          --attributes-to-get "Info" --profile "mgmt" | jq -r '.[].Info.S | fromjson | .ID')
+
+        if [ -n "$lock_id" ]; then
+          echo "Attempting to unlock Terraform state for ${{ inputs.environment-name }}..."
+          terraform force-unlock $lock_id <<< "yes"
+        fi
