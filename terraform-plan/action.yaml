@@ -79,6 +79,11 @@ runs:
         bucket="${{ inputs.repository }}-environment"
         key="${bucket}/env:/${{ inputs.environment-name }}/tf_state"
 
+        echo $bucket
+        echo $key
+
+        echo "{\"LockID\": {\"S\": \"$key\"}}"
+
         lock_id=$(aws dynamodb get-item --table-name $bucket \
           --key "{\"LockID\": {\"S\": \"$key\"}}" \
           --attributes-to-get "Info" | jq -r '.[].Info.S | fromjson | .ID')
