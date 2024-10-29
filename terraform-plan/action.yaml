@@ -77,7 +77,7 @@ runs:
       shell: bash
       run: |
         bucket="${{ inputs.repository }}-environment"
-        key="${bucket}-environment/env:/${{ inputs.environment-name }}/tf_state"
+        key="${bucket}/env:/${{ inputs.environment-name }}/tf_state"
 
         lock_id=$(aws dynamodb get-item --table-name "${bucket}" \
           --key '{"LockID": {"S": "'"${key}"'"}}' \
