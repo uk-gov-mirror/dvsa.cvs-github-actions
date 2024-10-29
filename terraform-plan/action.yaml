@@ -76,10 +76,8 @@ runs:
       if: failure()
       shell: bash
       run: |
-        bucket=${{ inputs.repository }}-environment
-
         lock_id=$(aws dynamodb get-item --table-name ${bucket} \
-          --key '{"LockID":{"S": "'"${bucket}/env:/${{ inputs.environment-name }}/tf_state"'"}}' \
+          --key '{"LockID":{"S": "'"${{ inputs.repository }}-environment/env:/${{ inputs.environment-name }}/tf_state"'"}}' \
           --attributes-to-get Info \
           | jq -r '.[].Info.S | fromjson | .ID')
 
