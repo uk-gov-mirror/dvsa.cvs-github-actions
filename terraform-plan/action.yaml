@@ -19,6 +19,8 @@ inputs:
   create-workspace:
     description: Should a new Terraform Workspace be created
     default: 'true'
+  repository:
+    description: The name of the repository
 
 outputs:
   changes-detected:
@@ -73,21 +75,14 @@ runs:
       if: failure()
       shell: bash
       run: |
-        # Get the Terraform Repository
-        bucket=$(basename `git rev-parse --show-toplevel`)
-        key=tf_state
+        bucket=${{ inputs.repository }}-environment
 
-        echo $bucket
-        echo $key
-        echo "${bucket}-environment/env:/${{ inputs.environment-name }}/${key}"
+        lock_id=$(aws dynamodb get-item --table-name ${bucket} \
+          --key '{"LockID":{"S": "'"${bucket}/env:/${{ inputs.environment-name }}/tf_state"'"}}' \
+          --attributes-to-get Info \
+          | jq -r '.[].Info.S | fromjson | .ID')
 
-        # # Unlock Terraform
-        # lock_id=$(aws dynamodb get-item --table-name ${bucket} \
-        #   --key '{"LockID":{"S": "'"${bucket}-environment/env:/${{ inputs.environment-name }}/${key}"'"}}' \
-        #   --attributes-to-get Info \
-        #   | jq -r '.[].Info.S | fromjson | .ID')
-
-        # if [ -n "$lock_id" ]; then
-        #   echo "Attempting to unlock Terraform state for ${{ inputs.environment-name }}..."
-        #   terraform force-unlock $lock_id <<< "yes"
-        # fi
+        if [ -n "$lock_id" ]; then
+          echo "Attempting to unlock Terraform state for ${{ inputs.environment-name }}..."
+          terraform force-unlock $lock_id <<< "yes"
+        fi
