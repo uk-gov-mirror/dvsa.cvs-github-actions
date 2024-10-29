@@ -21,6 +21,7 @@ inputs:
     default: 'true'
   repository:
     description: The name of the repository
+    default: 'wontwork'
 
 outputs:
   changes-detected:
