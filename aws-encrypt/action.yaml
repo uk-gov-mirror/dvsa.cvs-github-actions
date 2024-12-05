@@ -27,7 +27,7 @@ runs:
       with:
           path: ./encrypt
           key: encrypt-${{inputs.environment }}
-          restore-keys: encrypt-
+          # restore-keys: encrypt-
 
     - name: Install Encryption CLI
       if: ${{ steps.cache.outputs.cache-hit != 'true' }}
