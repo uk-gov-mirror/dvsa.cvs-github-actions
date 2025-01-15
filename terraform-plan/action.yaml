@@ -41,6 +41,13 @@ runs:
         environment-name: ${{ inputs.environment-name }}
         create-workspace: ${{ inputs.create-workspace }}
 
+    - name: 🔄 Terraform Refresh
+      shell: bash
+      run: |
+        echo "Refreshing Terraform state..."
+        terraform refresh -no-color
+        echo 'Terraform State Refreshed ✅' >> $GITHUB_STEP_SUMMARY
+
     - name: ✅ Terraform Validate
       shell: bash
       if: ${{ inputs.validate == 'true' }}
