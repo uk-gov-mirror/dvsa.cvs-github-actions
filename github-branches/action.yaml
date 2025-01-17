@@ -2,16 +2,16 @@ name: Manage GitHub Branches
 description: Create or Delete GitHub Branches
 
 inputs:
-  action: 
+  action:
     description: Delete or Create Action
     required: true
-  repositories: 
+  repositories:
     description: JSON List of repositories to perform action upon
     required: true
   branch-name:
     description: Name of the Branch to perform actions upon
     required: true
-  branch-source: 
+  branch-source:
     description: Source Branch for creation
     default: develop
   dry-run:
@@ -32,6 +32,7 @@ runs:
         # Function to Manage Branch
         manage_branch() {
           local repository=$1
+          
           # Check if the branch exists in the repository
           branch_exists=$(git ls-remote --heads https://github.com/dvsa/$repository ${{ inputs.branch-name }} | wc -l)
 
@@ -41,20 +42,17 @@ runs:
             echo "| $repository | ${{ inputs.branch-name }} | ✅ Deleted |" >> $GITHUB_STEP_SUMMARY || \
             echo "| $repository | ${{ inputs.branch-name }} | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
           elif [[ $branch_exists -eq 0 && "${{ inputs.action }}" == "Create" ]]; then
-            # Determine the default branch (check for 'main' first, then fallback to 'develop')
-            default_branch=${{ inputs.branch-source }}
-            
-            if [[ "${{ inputs.branch-source }}" == "develop" ]]; then
-              default_branch=$(gh api -H "Accept: application/vnd.github+json" /repos/dvsa/$repository | jq -r '.default_branch')
-            fi
-            
-            # Check if 'main' exists, and if so, select it
+            # First check if 'main' branch exists
             main_branch_exists=$(git ls-remote --heads https://github.com/dvsa/$repository main | wc -l)
+            
+            # Set default branch to 'main' if it exists, otherwise fallback to input branch-source (usually 'develop')
             if [[ $main_branch_exists -gt 0 ]]; then
               default_branch="main"
+            else
+              default_branch=${{ inputs.branch-source }}
             fi
 
-            # Retrieve the commit ID of the selected branch
+            # Retrieve the commit ID of the selected default branch
             commit_id=$(gh api -H "Accept: application/vnd.github+json" /repos/dvsa/$repository/branches/${default_branch} | jq -r '.commit.sha')
 
             # Perform Create action (Dry-run or real)
