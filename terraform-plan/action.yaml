@@ -25,8 +25,8 @@ inputs:
   encryption-key:
     description: ARN of a KMS Key to use for Encryption
     required: false
-  infracost-key:
-    description: API Key for InfraCost
+  # infracost-key:
+  #   description: API Key for InfraCost
 
 outputs:
   changes-detected:
@@ -85,19 +85,19 @@ runs:
           terraform.tfplan${{ inputs.encryption-key != '' && '.encrypted' || '' }}
         retention-days: ${{ inputs.plan-retention }}
 
-    # Run Infracost to get idea of cost changes
-    - name: 💰 Setup Infracost
-      uses: infracost/actions/setup@v3
-      with:
-        api-key: ${{ inputs.infracost-key }}
+    # # Run Infracost to get idea of cost changes
+    # - name: 💰 Setup Infracost
+    #   uses: infracost/actions/setup@v3
+    #   with:
+    #     api-key: ${{ inputs.infracost-key }}
 
-    - name: 💸 Generate Infracost Information
-      shell: bash
-      run: |
-        # Generate Infracost Information
-        terraform show -json terraform.tfplan > plan.json
-        infracost breakdown --path plan.json --format json --out-file breakdown.json
-        infracost output --path breakdown.json --format github-comment >> $GITHUB_STEP_SUMMARY
+    # - name: 💸 Generate Infracost Information
+    #   shell: bash
+    #   run: |
+    #     # Generate Infracost Information
+    #     terraform show -json terraform.tfplan > plan.json
+    #     infracost breakdown --path plan.json --format json --out-file breakdown.json
+    #     infracost output --path breakdown.json --format github-comment >> $GITHUB_STEP_SUMMARY
 
     - name: 🔓 Unlock State File
       if: failure()
