@@ -28,9 +28,7 @@ runs:
 
     - name: 🔧 Create `.npmrc`
       shell: bash
-      run: echo "//npm.pkg.github.com/:_authToken=$ACCESS_TOKEN" >> ~/.npmrc
-      env:
-        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+      run: echo "//npm.pkg.github.com/:_authToken=${{ inputs.access_token }}" >> ~/.npmrc
 
     - name: ➕ Install dependencies
       shell: bash
