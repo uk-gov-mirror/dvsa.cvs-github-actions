@@ -4,13 +4,13 @@ description: Store CVS Lambda Service Artefacts in S3
 inputs:
   gh_artifact_name:
     description: GitHub Artifact Name
-    required: false
+    required: true
   service_name:
     description: The service name
-    required: false
+    required: true
   environment_name:
     description: The environment name
-    required: false
+    required: true
   access_token:
     description: GitHub Access Token
     required: true
