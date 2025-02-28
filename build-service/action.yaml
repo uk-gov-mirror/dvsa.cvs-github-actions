@@ -1,0 +1,66 @@
+name: Build CVS Service
+description: Build a CVS Lambda Service
+
+inputs:
+  access_token:
+    description: GitHub Access Token
+    required: true
+  dynamo_db:
+    description: Require an install of Serverless DynamoDB
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: 📨 Checkout
+      uses: actions/checkout@v4
+
+    - name: 🔍 Read .nvmrc
+      id: nvm
+      shell: bash
+      run: echo "NVMRC=$(cat .nvmrc)" >> $GITHUB_ENV
+
+    - name: ⚙️ Setup Node.js ${{ env.NVMRC }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NVMRC }}
+        cache: 'npm'
+
+    - name: 🔧 Create `.npmrc`
+      shell: bash
+      run: echo "//npm.pkg.github.com/:_authToken=$ACCESS_TOKEN" >> ~/.npmrc
+      env:
+        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+
+    - name: ➕ Install dependencies
+      shell: bash
+      run: npm ci
+
+    - name: ⚒️ Check TS compiles
+      shell: bash
+      run: npx tsc --noEmit
+
+    - name: ⚒️ Build project
+      shell: bash
+      run: npm run build
+
+    - name: 📝 Lint codebase
+      shell: bash
+      run: npm run lint
+
+    - name: 🧪️ Execute unit tests with coverage
+      shell: bash
+      run: npm run test:coverage
+
+    - name: 📦 Package for Lambda
+      shell: bash
+      run: npm run package
+
+    - name: ☁️ Upload to GitHub Summary
+      uses: actions/upload-artifact@v4
+      with:
+        name: '${{ github.event.repository.name }}-artifacts-${{ github.event.pull_request.number || github.run_id }}'
+        retention-days: 5
+        overwrite: true
+        path: |
+          artifacts/*
