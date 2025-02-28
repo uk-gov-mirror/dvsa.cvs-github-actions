@@ -11,6 +11,10 @@ inputs:
   ignore_fail: 
     description: Ignore any test failures
     default: "false"
+outputs:
+  package: 
+    description: Artifact
+    value: '${{ github.event.repository.name }}-artifacts-${{ github.event.pull_request.number || github.run_id }}'
 
 runs:
   using: composite
