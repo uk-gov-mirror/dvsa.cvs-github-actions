@@ -21,6 +21,10 @@ inputs:
 runs:
   using: composite
   steps:
+
+    - name: ls
+      shell: bash
+      run: tree
     - name: Convert Artefact for Lambda Use
       shell: bash
       run: |
