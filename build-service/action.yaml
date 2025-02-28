@@ -8,6 +8,9 @@ inputs:
   dynamo_db:
     description: Require an install of Serverless DynamoDB
     default: "false"
+  ignore_fail: 
+    description: Ignore any test failures
+    default: "false"
 
 runs:
   using: composite
@@ -49,6 +52,7 @@ runs:
     - name: 🧪️ Execute unit tests with coverage
       shell: bash
       run: npm run test:coverage
+      continue-on-error: ${{ inputs.ignore_fail == 'true' }}
 
     - name: 📦 Package for Lambda
       shell: bash
