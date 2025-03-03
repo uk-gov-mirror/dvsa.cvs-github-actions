@@ -26,56 +26,22 @@ runs:
       shell: bash
       if: ${{ inputs.teams-webhook }}
       env:
-        WORKFLOW: ${{ github.workflow }}
         REPO: ${{ github.repository }}
         BRANCH: ${{ github.ref_name }}
-        COMMIT: ${{ github.sha }}
-        RUN_ID: ${{ github.run_id }}
+        JOB: ${{ github.job }}
         ACTOR: ${{ github.actor }}
       run: |
         curl -X POST -H "Content-Type: application/json" \
         -d "{
-          \"type\": \"message\",
-          \"attachments\": [
-            {
-              \"contentType\": \"application/vnd.microsoft.card.adaptive\",
-              \"content\": {
-                \"$schema\": \"http://adaptivecards.io/schemas/adaptive-card.json\",
-                \"type\": \"AdaptiveCard\",
-                \"version\": \"1.4\",
-                \"body\": [
-                  {
-                    \"type\": \"TextBlock\",
-                    \"size\": \"Large\",
-                    \"weight\": \"Bolder\",
-                    \"text\": \"🚨 GitHub Action Failed!\"
-                  },
-                  {
-                    \"type\": \"TextBlock\",
-                    \"text\": \"**Workflow:** $WORKFLOW\"
-                  },
-                  {
-                    \"type\": \"TextBlock\",
-                    \"text\": \"**Repository:** [$REPO](https://github.com/$REPO)\"
-                  },
-                  {
-                    \"type\": \"TextBlock\",
-                    \"text\": \"**Branch:** $BRANCH\"
-                  },
-                  {
-                    \"type\": \"TextBlock\",
-                    \"text\": \"**Commit:** [$COMMIT](https://github.com/$REPO/commit/$COMMIT)\"
-                  },
-                  {
-                    \"type\": \"TextBlock\",
-                    \"text\": \"**Run ID:** [View Logs](https://github.com/$REPO/actions/runs/$RUN_ID)\"
-                  }
-                ]
-              }
-            }
-          ]
+          \"text\": \"**🚨 GITHUB JOB FAILED 🚨**\\n\\n
+          **Repo:** $REPO\\n
+          **Branch:** $BRANCH\\n
+          **Failed Job:** $JOB\\n
+          🔄 **Triggered by:** $ACTOR\"
         }" "${{ inputs.teams-webhook }}"
 
+    - name: Install mailutils
+      run: sudo apt-get update && sudo apt-get install -y mailutils
 
     - name: Send Email Notification
       shell: bash
