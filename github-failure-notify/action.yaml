@@ -13,25 +13,26 @@ runs:
   using: "composite"
   steps:
     - name: Get Commit Author Email
+      shell: bash
       id: get-email
       run: |
         COMMIT_EMAIL="${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
         ALT_EMAIL="${{ github.actor }}@users.noreply.github.com"
         echo "commit-email=$COMMIT_EMAIL" >> $GITHUB_ENV
         echo "alt-email=$ALT_EMAIL" >> $GITHUB_ENV
-      shell: bash
+      
 
     - name: Send Teams Notification
+      shell: bash
       if: ${{ inputs.teams-webhook }}
       run: |
         curl -X POST -H "Content-Type: application/json" \
         -d '{
           "text": "**🚨 GITHUB JOB FAILED 🚨**\n\n**Repo:** ${{ github.repository }}\n**Branch:** ${{ github.ref_name }}\n**Failed Job:** ${{ github.job }}\n🔄 **Triggered by:** ${{ github.actor }}"
         }' "${{ inputs.teams-webhook }}"
-      shell: bash
 
     - name: Send Email Notification
+      shell: bash
       if: ${{ inputs.notify-email == 'true' }}
       run: |
-        echo "GitHub Job Failed for ${{ github.repository }}" | mail -s "🚨 GitHub Job Failed" "$commit-email"
-      shell: bash
+        echo -e "Subject: 🚨 GitHub Job Failed\n\nGitHub Job Failed for dvsa/cvs-devops" | sendmail "$commit-email"
