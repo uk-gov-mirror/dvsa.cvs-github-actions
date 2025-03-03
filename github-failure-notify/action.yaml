@@ -41,6 +41,7 @@ runs:
         }" "${{ inputs.teams-webhook }}"
 
     - name: Install mailutils
+      shell: bash
       run: sudo apt-get update && sudo apt-get install -y mailutils
 
     - name: Send Email Notification
