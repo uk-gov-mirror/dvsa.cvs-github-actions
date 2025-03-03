@@ -25,14 +25,60 @@ runs:
     - name: Send Teams Notification
       shell: bash
       if: ${{ inputs.teams-webhook }}
+      env:
+        WORKFLOW: ${{ github.workflow }}
+        REPO: ${{ github.repository }}
+        BRANCH: ${{ github.ref_name }}
+        COMMIT: ${{ github.sha }}
+        RUN_ID: ${{ github.run_id }}
+        ACTOR: ${{ github.actor }}
       run: |
         curl -X POST -H "Content-Type: application/json" \
-        -d '{
-          "text": "**🚨 GITHUB JOB FAILED 🚨**\n\n**Repo:** ${{ github.repository }}\n**Branch:** ${{ github.ref_name }}\n**Failed Job:** ${{ github.job }}\n🔄 **Triggered by:** ${{ github.actor }}"
-        }' "${{ inputs.teams-webhook }}"
+        -d "{
+          \"type\": \"message\",
+          \"attachments\": [
+            {
+              \"contentType\": \"application/vnd.microsoft.card.adaptive\",
+              \"content\": {
+                \"$schema\": \"http://adaptivecards.io/schemas/adaptive-card.json\",
+                \"type\": \"AdaptiveCard\",
+                \"version\": \"1.4\",
+                \"body\": [
+                  {
+                    \"type\": \"TextBlock\",
+                    \"size\": \"Large\",
+                    \"weight\": \"Bolder\",
+                    \"text\": \"🚨 GitHub Action Failed!\"
+                  },
+                  {
+                    \"type\": \"TextBlock\",
+                    \"text\": \"**Workflow:** $WORKFLOW\"
+                  },
+                  {
+                    \"type\": \"TextBlock\",
+                    \"text\": \"**Repository:** [$REPO](https://github.com/$REPO)\"
+                  },
+                  {
+                    \"type\": \"TextBlock\",
+                    \"text\": \"**Branch:** $BRANCH\"
+                  },
+                  {
+                    \"type\": \"TextBlock\",
+                    \"text\": \"**Commit:** [$COMMIT](https://github.com/$REPO/commit/$COMMIT)\"
+                  },
+                  {
+                    \"type\": \"TextBlock\",
+                    \"text\": \"**Run ID:** [View Logs](https://github.com/$REPO/actions/runs/$RUN_ID)\"
+                  }
+                ]
+              }
+            }
+          ]
+        }" "${{ inputs.teams-webhook }}"
+
 
     - name: Send Email Notification
       shell: bash
       if: ${{ inputs.notify-email == 'true' }}
       run: |
-        echo -e "Subject: 🚨 GitHub Job Failed\n\nGitHub Job Failed for dvsa/cvs-devops" | sendmail "$commit-email"
+        echo "GitHub Job Failed for ${{ github.repository }}" | mail -s "🚨 GitHub Job Failed" "$commit-email"
