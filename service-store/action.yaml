@@ -2,10 +2,7 @@ name: Store CVS Service
 description: Store CVS Lambda Service Artefacts in S3
 
 inputs:
-  gh_artifact_name:
-    description: GitHub Artifact Name
-    required: true
-  service_name:
+  service_names:
     description: The service name
     required: true
   environment_name:
@@ -22,18 +19,17 @@ runs:
   using: composite
   steps:
 
-    - name: ls
-      shell: bash
-      run: tree
-    - name: Convert Artefact for Lambda Use
+    - name: Generate SHA256
+      id: artefact
       shell: bash
       run: |
         echo -n ${{ github.sha }} > hash.txt
-        cp ${{ inputs.gh_artifact_name }}.zip ${{ inputs.service_name }}-${{ github.sha }}.zip
+        cp artifacts/${{ inputs.service_name }}*.zip ${{ inputs.service_name }}-${{ github.sha }}.zip
         LAMBDA_SHA=$(openssl dgst -sha256 -binary ${{ inputs.service_name }}-${{ github.sha }}.zip | openssl enc -base64)
-        echo "LAMBDA_SHA=$LAMBDA_SHA" >> $GITHUB_ENV
-        aws s3 cp hash.txt "s3://${{ inputs.s3_bucket }}/${{inputs.service_name }}"/latestHash_${{ inputs.environment_name }}.txt --metadata "sha256sum=${{ env.LAMBDA_SHA }}"
-
+        echo "lambda_sha=$LAMBDA_SHA" >> $GITHUB_OUTPUT
+        
     - name: Upload to S3
       shell: bash
-      run: aws s3 cp ${{ inputs.service_name }}-${{ github.sha }}.zip "s3://${{ inputs.s3_bucket }}/${{inputs.service_name }}"/${{ github.sha }}.zip --metadata "sha256sum=${{ env.LAMBDA_SHA }},Tag=${{ inputs.service_name }},commit=${{ github.sha }}"
+      run: |
+        aws s3 cp hash.txt "s3://${{ inputs.s3_bucket }}/${{inputs.service_name }}/latestHash_${{ inputs.environment_name }}.txt --metadata "sha256sum=${{ steps.artefact.outputs.lambda_sha }}"
+        aws s3 cp ${{ inputs.service_name }}-${{ github.sha }}.zip "s3://${{ inputs.s3_bucket }}/${{inputs.service_name }}/${{ github.sha }}.zip" --metadata "sha256sum=${{ steps.artefact.outputs.lambda_sha }},Tag=${{ inputs.service_name }},commit=${{ github.sha }}"
