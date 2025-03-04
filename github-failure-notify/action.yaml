@@ -23,6 +23,7 @@ runs:
       
 
     - name: Send Teams Notification
+      shell: bash
       run: |
         JSON_PAYLOAD=$(jq -n --arg repo "$REPO" --arg branch "$BRANCH" --arg job "$JOB" --arg actor "$ACTOR" '
         {
