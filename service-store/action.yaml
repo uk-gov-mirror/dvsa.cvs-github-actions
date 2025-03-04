@@ -31,5 +31,5 @@ runs:
     - name: Upload to S3
       shell: bash
       run: |
-        aws s3 cp hash.txt "s3://${{ inputs.s3_bucket }}/${{inputs.service_name }}/latestHash_${{ inputs.environment_name }}.txt --metadata "sha256sum=${{ steps.artefact.outputs.lambda_sha }}"
+        aws s3 cp hash.txt "s3://${{ inputs.s3_bucket }}/${{inputs.service_name }}/latestHash_${{ inputs.environment_name }}.txt" --metadata "sha256sum=${{ steps.artefact.outputs.lambda_sha }}"
         aws s3 cp ${{ inputs.service_name }}-${{ github.sha }}.zip "s3://${{ inputs.s3_bucket }}/${{ inputs.service_name }}/${{ github.sha }}.zip" --metadata "sha256sum=${{ steps.artefact.outputs.lambda_sha }},Tag=${{ inputs.service_name }},commit=${{ github.sha }}"
