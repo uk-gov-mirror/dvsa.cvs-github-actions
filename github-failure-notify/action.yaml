@@ -58,6 +58,7 @@ runs:
         curl -X POST -H "Content-Type: application/json" -d "$JSON_PAYLOAD" "${{ inputs.teams-webhook }}"
 
     - name: Debug JSON Payload
+      shell: bash
       run: echo "$JSON_PAYLOAD"
 
     # - name: Install mailutils
