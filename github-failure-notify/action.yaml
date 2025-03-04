@@ -31,14 +31,34 @@ runs:
         JOB: ${{ github.job }}
         ACTOR: ${{ github.actor }}
       run: |
-        curl -X POST -H "Content-Type: application/json" \
-        -d "{
-          \"text\": \"**🚨 GITHUB JOB FAILED 🚨**\\n\\n
-          **Repo:** $REPO\\n
-          **Branch:** $BRANCH\\n
-          **Failed Job:** $JOB\\n
-          🔄 **Triggered by:** $ACTOR\"
-        }" "${{ inputs.teams-webhook }}"
+        JSON_PAYLOAD=$(jq -n \
+          --arg repo "$REPO" \
+          --arg branch "$BRANCH" \
+          --arg job "$JOB" \
+          --arg actor "$ACTOR" \
+          '{
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "themeColor": "ff0000",
+            "summary": "GitHub Job Failed",
+            "sections": [{
+              "activityTitle": "**🚨 GITHUB JOB FAILED 🚨**",
+              "facts": [
+                { "name": "Repo", "value": $repo },
+                { "name": "Branch", "value": $branch },
+                { "name": "Failed Job", "value": $job },
+                { "name": "Triggered by", "value": $actor }
+              ],
+              "markdown": true
+            }]
+          }')
+        
+        echo "JSON Payload: $JSON_PAYLOAD"
+        
+        curl -X POST -H "Content-Type: application/json" -d "$JSON_PAYLOAD" "${{ inputs.teams-webhook }}"
+
+    - name: Debug JSON Payload
+      run: echo "$JSON_PAYLOAD"
 
     # - name: Install mailutils
     #   shell: bash
