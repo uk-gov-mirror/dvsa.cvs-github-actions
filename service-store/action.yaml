@@ -25,10 +25,10 @@ runs:
     - name: Convert and Upload
       shell: bash
       run: |
-        for f in $(ls artifacts/*.zip); do
-          svc=${f#/*}
+        cd artifacts
+        for file in $(ls *.zip); do
           LAMBDA_SHA=$(openssl dgst -sha256 -binary ${f} | openssl enc -base64)
-          echo -n ${{ github.sha }} | aws s3 cp - s3://${{ inputs.s3_bucket }}/${svc%-*-*}/latestHash_${{ inputs.environment_name }}.txt --content-type "text/plain" 2>&1
-          aws s3 cp ${f} "s3://${{ inputs.s3_bucket }}/${svc%-*-*}/${{ github.sha }}.zip" --metadata "sha256sum=${LAMBDA_SHA},Tag=${{ inputs.service_name }},commit=${{ github.sha }}"
+          echo -n ${{ github.sha }} | aws s3 cp - s3://${{ inputs.s3_bucket }}/${file%-*-*}/latestHash_${{ inputs.environment_name }}.txt --content-type "text/plain" 2>&1
+          aws s3 cp ${file} "s3://${{ inputs.s3_bucket }}/${file%-*-*}/${{ github.sha }}.zip" --metadata "sha256sum=${LAMBDA_SHA},Tag=${{ inputs.service_name }},commit=${{ github.sha }}"
         done        
 
