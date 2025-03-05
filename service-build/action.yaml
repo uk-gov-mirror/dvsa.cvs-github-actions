@@ -65,8 +65,8 @@ runs:
     - name: ☁️ Upload to GitHub Summary
       uses: actions/upload-artifact@v4
       with:
-        name: '${{ github.event.repository.name }}-artifacts-${{ github.event.pull_request.number || github.run_id }}'
+        name: ${{ github.event.repository.name }}-artifacts-${{ github.event.pull_request.number || github.run_id }}
         retention-days: 5
         overwrite: true
         path: |
-          artifacts/*
+          artifacts/*.zip
