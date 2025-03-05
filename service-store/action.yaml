@@ -2,6 +2,8 @@ name: Store CVS Service
 description: Store CVS Lambda Service Artefacts in S3
 
 inputs:
+  service_name:
+    description: The CVS Service Name
   environment_name:
     description: The environment name
     required: true
@@ -24,8 +26,9 @@ runs:
       shell: bash
       run: |
         for f in $(ls artifacts/*.zip); do
+          svc=${f#/*}
           LAMBDA_SHA=$(openssl dgst -sha256 -binary ${f} | openssl enc -base64)
-          echo -n ${{ github.sha }} | aws s3 cp - s3://${{ inputs.s3_bucket }}/${f%-*-*}/latestHash_${{ inputs.environment_name }}.txt --content-type "text/plain" 2>&1
-          aws s3 cp ${f} "s3://${{ inputs.s3_bucket }}/${f%-*-*}/${{ github.sha }}.zip" --metadata "sha256sum=${LAMBDA_SHA},Tag=${{ inputs.service_name }},commit=${{ github.sha }}"
+          echo -n ${{ github.sha }} | aws s3 cp - s3://${{ inputs.s3_bucket }}/${svc%-*-*}/latestHash_${{ inputs.environment_name }}.txt --content-type "text/plain" 2>&1
+          aws s3 cp ${f} "s3://${{ inputs.s3_bucket }}/${svc%-*-*}/${{ github.sha }}.zip" --metadata "sha256sum=${LAMBDA_SHA},Tag=${{ inputs.service_name }},commit=${{ github.sha }}"
         done        
 
