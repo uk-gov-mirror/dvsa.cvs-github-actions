@@ -22,12 +22,6 @@ runs:
         environment-name: ${{ inputs.environment-name }}
         create-workspace: ${{ inputs.create-workspace }}
 
-    - name: Refresh Terraform
-      shell: bash
-      env:
-        AWS_PROFILE: main
-      run: terraform refresh
-
     - name: 🔓 Unlock State File
       if: failure()
       shell: bash
@@ -43,3 +37,9 @@ runs:
           echo "Attempting to unlock Terraform state for ${{ inputs.environment-name }}..."
           terraform force-unlock $lock_id <<< "yes"
         fi
+
+    - name: Refresh Terraform
+      shell: bash
+      env:
+        AWS_PROFILE: main
+      run: terraform refresh
