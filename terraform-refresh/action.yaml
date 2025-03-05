@@ -11,6 +11,9 @@ inputs:
   create-workspace:
     description: Create new Workspace if required
     default: 'true'
+  repository:
+    description: The name of the repository
+    default: 'cvs-tf'
     
 runs:
   using: composite
