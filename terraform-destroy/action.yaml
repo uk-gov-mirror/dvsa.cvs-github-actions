@@ -28,10 +28,11 @@ runs:
         create-workspace: 'false'
 
     - name: Refresh Terraform
-      shell: bash
-      env:
-        AWS_PROFILE: main
-      run: terraform refresh
+      uses: dvsa/cvs-github-actions/terraform-refresh@feature/CB2-16609
+      with:
+        terraform-version: ${{ inputs.terraform-version }}
+        environment-name: ${{ inputs.environment-name }}
+        create-workspace: 'false'
 
     - name: Remove VPC Connections
       shell: bash   
