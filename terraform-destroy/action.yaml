@@ -47,6 +47,7 @@ runs:
 
     - name: Terraform Plan
       id: plan
+      if: ${{ steps.refresh.outcome == 'success' }}
       uses: dvsa/cvs-github-actions/terraform-plan@develop
       with:
         options: '-destroy'
@@ -58,7 +59,7 @@ runs:
         infracost-key: ${{ inputs.infracost-key }}
 
     - name: Terraform Apply
-      if: ${{ inputs.dry-run == 'false' && steps.plan.outputs.changes-detected == 'true' }}
+      if: ${{ inputs.dry-run == 'false' && steps.refresh.outcome == 'success' && steps.plan.outputs.changes-detected == 'true' }}
       uses: dvsa/cvs-github-actions/terraform-apply@develop
       with:
         terraform-version: ${{ inputs.terraform-version }}
