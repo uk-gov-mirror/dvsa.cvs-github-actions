@@ -88,11 +88,13 @@ runs:
     # Run Infracost to get idea of cost changes
     - name: 💰 Setup Infracost
       uses: infracost/actions/setup@v3
+      continue-on-error: true
       with:
         api-key: ${{ inputs.infracost-key }}
 
     - name: 💸 Generate Infracost Information
       shell: bash
+      continue-on-error: true
       run: |
         # Generate Infracost Information
         terraform show -json terraform.tfplan > plan.json
