@@ -29,15 +29,8 @@ runs:
         echo "Failed Job: ${{ github.job }}"
         echo "Actor: ${{ github.actor }}"
       
-    - name: Send Teams Notification
+    - name: Send Test Teams Notification
       shell: bash
-      if: ${{ inputs.teams-webhook }}
-      env:
-        REPO: ${{ github.repository }}
-        BRANCH: ${{ github.ref_name }}
-        JOB: ${{ github.job }}
-        ACTOR: ${{ github.actor }}
-        TEAMS_WEBHOOK: ${{ inputs.teams-webhook }}
       run: |
         curl -X POST -H "Content-Type: application/json" \
         -d '{
@@ -49,10 +42,10 @@ runs:
             {
               "activityTitle": "**🚨 GITHUB JOB FAILED 🚨**",
               "facts": [
-                { "name": "Repo", "value": "'"$REPO"'" },
-                { "name": "Branch", "value": "'"$BRANCH"'" },
-                { "name": "Failed Job", "value": "'"$JOB"'" },
-                { "name": "Triggered by", "value": "'"$ACTOR"'" }
+                { "name": "Repo", "value": "dvsa/cvs-devops" },
+                { "name": "Branch", "value": "feature/CB2-16677" },
+                { "name": "Failed Job", "value": "rebase-code" },
+                { "name": "Triggered by", "value": "TaylorHalf" }
               ],
               "markdown": true
             }
