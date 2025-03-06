@@ -20,8 +20,15 @@ runs:
         ALT_EMAIL="${{ github.actor }}@users.noreply.github.com"
         echo "commit-email=$COMMIT_EMAIL" >> $GITHUB_ENV
         echo "alt-email=$ALT_EMAIL" >> $GITHUB_ENV
-      
 
+    - name: Debug
+      shell: bash
+      run: |
+        echo "Repo: ${{ github.repository }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Failed Job: ${{ github.job }}"
+        echo "Actor: ${{ github.actor }}"
+      
     - name: Send Teams Notification
       shell: bash
       if: ${{ inputs.teams-webhook }}
