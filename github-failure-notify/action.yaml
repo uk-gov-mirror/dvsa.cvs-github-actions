@@ -20,24 +20,21 @@ runs:
         ALT_EMAIL="${{ github.actor }}@users.noreply.github.com"
         echo "commit-email=$COMMIT_EMAIL" >> $GITHUB_ENV
         echo "alt-email=$ALT_EMAIL" >> $GITHUB_ENV
-
-    - name: Debug
-      shell: bash
-      run: |
-        echo "Repo: ${{ github.repository }}"
-        echo "Branch: ${{ github.ref_name }}"
-        echo "Failed Job: ${{ github.job }}"
-        echo "Actor: ${{ github.actor }}"
       
-    - name: Send Failure Notification to Teams
+    - name: Send Teams Notification
       shell: bash
-      if: failure()
+      if: ${{ inputs.teams-webhook }}
+      env:
+        TEAMS_WEBHOOK: ${{ inputs.teams-webhook }}
+        BRANCH: ${{ github.ref_name }}
+        JOB: ${{ github.job }}
+        ACTOR: ${{ github.actor }}
       run: |
         curl -X POST -H "Content-Type: application/json" -d '{
-          "repo": "'"${GITHUB_REPOSITORY}"'",
-          "branch": "'"${GITHUB_REF#refs/heads/}"'",
+          "repo": "'"${{ github.repository }}"'",
+          "branch": "'"${{ github.ref_name }}"'",
           "job": "'"${{ github.job }}"'",
-          "actor": "'"${GITHUB_ACTOR}"'"
+          "actor": "'"${{ github.actor }}"'"
         }' "$TEAMS_WEBHOOK"
 
     # - name: Debug JSON Payload
