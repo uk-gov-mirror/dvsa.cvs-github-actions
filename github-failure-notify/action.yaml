@@ -29,36 +29,15 @@ runs:
         echo "Failed Job: ${{ github.job }}"
         echo "Actor: ${{ github.actor }}"
       
-    - name: Send Teams Notification
-      shell: bash
-      if: ${{ inputs.teams-webhook }}
-      env:
-        TEAMS_WEBHOOK: ${{ inputs.teams-webhook }}
-        REPO: ${{ github.repository }}
-        BRANCH: ${{ github.ref_name }}
-        JOB: ${{ github.job }}
-        ACTOR: ${{ github.actor }}
+    - name: Send Failure Notification to Teams
+      if: failure()
       run: |
-        curl -X POST -H "Content-Type: application/json" \
-        -d '{
-          "@type": "MessageCard",
-          "@context": "http://schema.org/extensions",
-          "themeColor": "ff0000",
-          "summary": "GitHub Job Failed",
-          "sections": [
-            {
-              "activityTitle": "**🚨 GITHUB JOB FAILED 🚨**",
-              "facts": [
-                { "name": "Repo", "value": "'"${REPO}"'" },
-                { "name": "Branch", "value": "'"${BRANCH}"'" },
-                { "name": "Failed Job", "value": "'"${JOB}"'" },
-                { "name": "Triggered by", "value": "'"${ACTOR}"'" }
-              ],
-              "markdown": true
-            }
-          ]
+        curl -X POST -H "Content-Type: application/json" -d '{
+          "repo": "'"${GITHUB_REPOSITORY}"'",
+          "branch": "'"${GITHUB_REF#refs/heads/}"'",
+          "job": "'"${{ github.job }}"'",
+          "actor": "'"${GITHUB_ACTOR}"'"
         }' "$TEAMS_WEBHOOK"
-
 
     # - name: Debug JSON Payload
     #   shell: bash
