@@ -37,16 +37,8 @@ runs:
           "actor": "'"${{ github.actor }}"'"
         }' "$TEAMS_WEBHOOK"
 
-    # - name: Debug JSON Payload
-    #   shell: bash
-    #   run: echo "$JSON_PAYLOAD"
-
-    # - name: Install mailutils
-    #   shell: bash
-    #   run: sudo apt-get update && sudo apt-get install -y mailutils
-
-    # - name: Send Email Notification
-    #   shell: bash
-    #   if: ${{ inputs.notify-email == 'true' }}
-    #   run: |
-    #     echo "GitHub Job Failed for ${{ github.repository }}" | mail -s "🚨 GitHub Job Failed" "$commit-email"
+    - name: Send Email Notification
+      shell: bash
+      if: ${{ inputs.notify-email == 'true' }}
+      run: |
+        echo "GitHub Job Failed for ${{ github.repository }}" | mail -s "🚨 GitHub Job Failed" "$commit-email"
