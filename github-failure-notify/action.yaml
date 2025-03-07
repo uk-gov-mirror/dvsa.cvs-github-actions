@@ -30,6 +30,7 @@ runs:
         echo "Actor: ${{ github.actor }}"
       
     - name: Send Failure Notification to Teams
+      shell: bash
       if: failure()
       run: |
         curl -X POST -H "Content-Type: application/json" -d '{
