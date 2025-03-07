@@ -37,6 +37,10 @@ runs:
           "actor": "'"${{ github.actor }}"'"
         }' "$TEAMS_WEBHOOK"
 
+    - name: Install mailutils
+      shell: bash
+      run: sudo apt-get update && sudo apt-get install -y mailutils
+
     - name: Send Email Notification
       shell: bash
       if: ${{ inputs.notify-email == 'true' }}
