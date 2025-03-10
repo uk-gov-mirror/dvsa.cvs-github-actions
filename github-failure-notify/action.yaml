@@ -36,13 +36,3 @@ runs:
           "job": "'"${{ github.job }}"'",
           "actor": "'"${{ github.actor }}"'"
         }' "$TEAMS_WEBHOOK"
-
-    - name: Install mailutils
-      shell: bash
-      run: sudo apt-get update && sudo apt-get install -y mailutils
-
-    - name: Send Email Notification
-      shell: bash
-      if: ${{ inputs.notify-email == 'true' }}
-      run: |
-        echo "GitHub Job Failed for ${{ github.repository }}" | mail -s "🚨 GitHub Job Failed" "$commit-email"
