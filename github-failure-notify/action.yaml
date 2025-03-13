@@ -11,11 +11,6 @@ runs:
     - name: Send Teams Notification
       shell: bash
       if: ${{ inputs.teams-webhook }}
-      env:
-        TEAMS_WEBHOOK: ${{ inputs.teams-webhook }}
-        BRANCH: ${{ github.ref_name }}
-        JOB: ${{ github.job }}
-        ACTOR: ${{ github.actor }}
       run: |
         curl -X POST -H "Content-Type: application/json" -d '{
           "repo": "'"${{ github.repository }}"'",
