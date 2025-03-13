@@ -81,7 +81,6 @@ runs:
       with:
         name: plan-${{ github.run_id }}
         path: |
-          plan.txt
           terraform.tfplan${{ inputs.encryption-key != '' && '.encrypted' || '' }}
         retention-days: ${{ inputs.plan-retention }}
 
