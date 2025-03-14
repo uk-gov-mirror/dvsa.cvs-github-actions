@@ -18,5 +18,6 @@ runs:
           "repo": "'"${{ github.repository }}"'",
           "branch": "'"${{ github.ref_name }}"'",
           "job": "'"${{ github.job }}"'",
-          "actor": "'"${{ github.actor }}"'"
+          "actor": "'"${{ github.actor }}"'",
+          "workflow": "'"${{ github.workflow }}"'"
         }' "$TEAMS_WEBHOOK"
