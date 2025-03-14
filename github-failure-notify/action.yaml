@@ -17,7 +17,6 @@ runs:
         curl -X POST -H "Content-Type: application/json" -d '{
           "repo": "'"${{ github.repository }}"'",
           "branch": "'"${{ github.ref_name }}"'",
-          "job": "'"${{ github.job }}"'",
+          "workflow": "'"${{ github.workflow }}"'",
           "actor": "'"${{ github.actor }}"'",
-          "workflow": "'"${{ github.workflow }}"'"
         }' "$TEAMS_WEBHOOK"
