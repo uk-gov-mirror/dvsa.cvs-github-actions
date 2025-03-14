@@ -14,9 +14,11 @@ runs:
       env:
         TEAMS_WEBHOOK: ${{ inputs.teams-webhook }}
       run: |
+        WORKFLOW_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         curl -X POST -H "Content-Type: application/json" -d '{
           "repo": "'"${{ github.repository }}"'",
           "branch": "'"${{ github.ref_name }}"'",
           "workflow": "'"${{ github.workflow }}"'",
           "actor": "'"${{ github.actor }}"'",
+          "workflow_url": "'"$WORKFLOW_URL"'"
         }' "$TEAMS_WEBHOOK"
