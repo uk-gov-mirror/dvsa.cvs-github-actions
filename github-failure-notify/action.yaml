@@ -9,6 +9,7 @@ runs:
   using: "composite"
   steps:      
     - name: Send Teams Notification on Failure
+      shell: bash
       if: failure()
       env:
         TEAMS_WEBHOOK: ${{ inputs.teams-webhook }}
