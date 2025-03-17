@@ -11,7 +11,7 @@ runs:
     - name: Send Teams Notification on Failure
       if: failure()
       env:
-        TEAMS_WEBHOOK: ${{ secrets.FAILURE_TEAMS_WEBHOOK_URL }}
+        TEAMS_WEBHOOK: ${{ inputs.teams-webhook }}
       run: |
         curl -X POST -H "Content-Type: application/json" -d '{
           "type": "message",
