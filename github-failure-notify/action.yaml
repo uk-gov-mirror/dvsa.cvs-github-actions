@@ -8,58 +8,17 @@ inputs:
 runs:
   using: "composite"
   steps:      
-    - name: Send Teams Notification on Failure
+    - name: Send Teams Notification
       shell: bash
-      if: failure()
+      if: ${{ inputs.teams-webhook }}
       env:
         TEAMS_WEBHOOK: ${{ inputs.teams-webhook }}
       run: |
+        WORKFLOW_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         curl -X POST -H "Content-Type: application/json" -d '{
-          "type": "message",
-          "attachments": [
-            {
-              "contentType": "application/vnd.microsoft.card.adaptive",
-              "content": {
-                "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                "type": "AdaptiveCard",
-                "version": "1.4",
-                "body": [
-                  {
-                    "type": "TextBlock",
-                    "text": "🚨 GITHUB JOB FAILED 🚨",
-                    "weight": "bolder",
-                    "size": "large",
-                    "color": "attention"
-                  },
-                  {
-                    "type": "TextBlock",
-                    "text": "**Repo:** ${{ github.repository }}",
-                    "wrap": true
-                  },
-                  {
-                    "type": "TextBlock",
-                    "text": "**Branch:** ${{ github.ref_name }}",
-                    "wrap": true
-                  },
-                  {
-                    "type": "TextBlock",
-                    "text": "**Failed Workflow:** ${{ github.workflow }}",
-                    "wrap": true
-                  },
-                  {
-                    "type": "TextBlock",
-                    "text": "**Triggered by:** ${{ github.actor }}",
-                    "wrap": true
-                  }
-                ],
-                "actions": [
-                  {
-                    "type": "Action.OpenUrl",
-                    "title": "🔗 View Workflow",
-                    "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                  }
-                ]
-              }
-            }
-          ]
+          "repo": "'"${{ github.repository }}"'",
+          "branch": "'"${{ github.ref_name }}"'",
+          "workflow": "'"${{ github.workflow }}"'",
+          "actor": "'"${{ github.actor }}"'",
+          "workflow_url": "'"$WORKFLOW_URL"'"
         }' "$TEAMS_WEBHOOK"
