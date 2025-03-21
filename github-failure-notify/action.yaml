@@ -1,0 +1,46 @@
+name: "GitHub Failure Notifier"
+description: "Notifies Teams and/or email when a GitHub job fails."
+inputs:
+  teams-webhook:
+    description: "Microsoft Teams webhook URL"
+    required: false
+
+runs:
+  using: "composite"
+  steps:      
+    - name: Send Teams Notification
+      shell: bash
+      if: ${{ inputs.teams-webhook }}
+      env:
+        TEAMS_WEBHOOK: ${{ inputs.teams-webhook }}
+      run: |
+        WORKFLOW_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        curl -X POST -H "Content-Type: application/json" -d '{
+          "repo": "'"${{ github.repository }}"'",
+          "branch": "'"${{ github.ref_name }}"'",
+          "workflow": "'"${{ github.workflow }}"'",
+          "actor": "'"${{ github.actor }}"'",
+          "workflow_url": "'"$WORKFLOW_URL"'",
+          "attachments": [
+            {
+              "contentType": "application/vnd.microsoft.card.adaptive",
+              "content": {
+                "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                "type": "AdaptiveCard",
+                "version": "1.4",
+                "body": [
+                  {
+                    "type": "ActionSet",
+                    "actions": [
+                      {
+                        "type": "Action.OpenUrl",
+                        "title": "🔗 View Failed Workflow",
+                        "url": "'"$WORKFLOW_URL"'"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }' "$TEAMS_WEBHOOK"
