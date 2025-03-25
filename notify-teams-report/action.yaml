@@ -28,6 +28,7 @@ runs:
         elif [[ "$STATUS" == "cancelled" ]]; then
           COLOR="warning"
         fi
+
         MESSAGE=$(cat <<EOF
         {
           "type": "message",
@@ -124,4 +125,5 @@ runs:
         }
         EOF
         )
+        
         curl -H "Content-Type: application/json" -d "$MESSAGE" "${{ inputs.webhook_url }}"
