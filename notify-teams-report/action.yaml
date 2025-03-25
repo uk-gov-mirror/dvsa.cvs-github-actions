@@ -23,6 +23,7 @@ runs:
       run: |
         STATUS="${{ job.status }}"
         COLOR="good"
+
         if [[ "$STATUS" == "failure" ]]; then
           COLOR="attention"
         elif [[ "$STATUS" == "cancelled" ]]; then
@@ -125,5 +126,5 @@ runs:
         }
         EOF
         )
-        
+
         curl -H "Content-Type: application/json" -d "$MESSAGE" "${{ inputs.webhook_url }}"
