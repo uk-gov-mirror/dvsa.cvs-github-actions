@@ -1,127 +1,127 @@
 name: Send Teams Notification
- description: 'Send a notification to Teams channel via Webhook.'
+description: 'Send a notification to Teams channel via Webhook.'
 
- inputs:
-   webhook_url:
-     description: 'The webhook URL to send the notification to.'
-     required: true
-   information:
-     description: 'Extended information.'
-     default: ''
-   report-link:
-     description: 'The link to the test reports.'
-     required: false
-   project:
-     description: The project being tested
-     required: true
+inputs:
+  webhook_url:
+    description: 'The webhook URL to send the notification to.'
+    required: true
+  information:
+    description: 'Extended information.'
+    default: ''
+  report-link:
+    description: 'The link to the test reports.'
+    required: false
+  project:
+    description: The project being tested
+    required: true
 
- runs:
-   using: 'composite'
-   steps:
-     - name: Microsoft Teams Notification
-       shell: bash
-       run: |
-         STATUS="${{ job.status }}"
-         COLOR="good"
-         if [[ "$STATUS" == "failure" ]]; then
-           COLOR="attention"
-         elif [[ "$STATUS" == "cancelled" ]]; then
-           COLOR="warning"
-         fi
-         MESSAGE=$(cat <<EOF
-         {
-           "type": "message",
-           "attachments": [
-             {
-               "contentType": "application/vnd.microsoft.card.adaptive",
-               "content": {
-                 "\$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                 "version": "1.4",
-                 "type": "AdaptiveCard",
-                 "body": [
-                   {
-                     "type": "ColumnSet",
-                     "columns": [
-                       {
-                         "width": "50px",
-                         "items": [
-                           {
-                             "type": "Image",
-                             "url": "https://raw.githubusercontent.com/Skitionek/notify-microsoft-teams/master/icons/$STATUS.png",
-                             "size": "stretch"
-                           }
-                         ]
-                       },
-                       {
-                         "width": "stretch",
-                         "verticalContentAlignment": "center",
-                         "items": [
-                           {
-                             "type": "TextBlock",
-                             "size": "Large",
-                             "weight": "Bolder",
-                             "text": "${GITHUB_WORKFLOW} Notification"
-                           },
-                           {
-                             "type": "TextBlock",
-                             "text": "**Repository:** ${GITHUB_REPOSITORY}"
-                           },
-                           {
-                             "type": "TextBlock",
-                             "text": "**Branch:** ${GITHUB_REF_NAME}"
-                           },
-                           {
-                             "type": "TextBlock",
-                             "text": "**Status:** ${STATUS}",
-                             "color": "${COLOR}"
-                           },
-                           {
-                             "type": "TextBlock",
-                             "text": "**Project:** ${{ inputs.project }}"
-                           },
-                           {
-                             "type": "TextBlock",
-                             "text": "**Other Information:** ${{ inputs.information }}"
-                           }
-                         ]
-                       }
-                     ]
-                   },
-                   {
-                     "type": "ColumnSet",
-                     "columns": [
-                       {
-                         "width": "stretch",
-                         "items": [
-                           {
-                             "type": "ActionSet",
-                             "actions": [
-                               {
-                                 "type": "Action.OpenUrl",
-                                 "title": "View Workflow",
-                                 "url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-                               }
-                             ]
-                           },
-                           {
-                             "type": "ActionSet",
-                             "actions": [
-                               {
-                                 "type": "Action.OpenUrl",
-                                 "title": "View Test Reports",
-                                 "url": "${{inputs.report-link}}"
-                               }
-                             ]
-                           }
-                         ]
-                       }
-                     ]
-                   }
-                 ]
-               }
-             }
-           ]
-         }
-         EOF
-         )
-         curl -H "Content-Type: application/json" -d "$MESSAGE" "${{ inputs.webhook_url }}"
+runs:
+  using: 'composite'
+  steps:
+    - name: Microsoft Teams Notification
+      shell: bash
+      run: |
+        STATUS="${{ job.status }}"
+        COLOR="good"
+        if [[ "$STATUS" == "failure" ]]; then
+          COLOR="attention"
+        elif [[ "$STATUS" == "cancelled" ]]; then
+          COLOR="warning"
+        fi
+        MESSAGE=$(cat <<EOF
+        {
+          "type": "message",
+          "attachments": [
+            {
+              "contentType": "application/vnd.microsoft.card.adaptive",
+              "content": {
+                "\$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                "version": "1.4",
+                "type": "AdaptiveCard",
+                "body": [
+                  {
+                    "type": "ColumnSet",
+                    "columns": [
+                      {
+                        "width": "50px",
+                        "items": [
+                          {
+                            "type": "Image",
+                            "url": "https://raw.githubusercontent.com/Skitionek/notify-microsoft-teams/master/icons/$STATUS.png",
+                            "size": "stretch"
+                          }
+                        ]
+                      },
+                      {
+                        "width": "stretch",
+                        "verticalContentAlignment": "center",
+                        "items": [
+                          {
+                            "type": "TextBlock",
+                            "size": "Large",
+                            "weight": "Bolder",
+                            "text": "${GITHUB_WORKFLOW} Notification"
+                          },
+                          {
+                            "type": "TextBlock",
+                            "text": "**Repository:** ${GITHUB_REPOSITORY}"
+                          },
+                          {
+                            "type": "TextBlock",
+                            "text": "**Branch:** ${GITHUB_REF_NAME}"
+                          },
+                          {
+                            "type": "TextBlock",
+                            "text": "**Status:** ${STATUS}",
+                            "color": "${COLOR}"
+                          },
+                          {
+                            "type": "TextBlock",
+                            "text": "**Project:** ${{ inputs.project }}"
+                          },
+                          {
+                            "type": "TextBlock",
+                            "text": "**Other Information:** ${{ inputs.information }}"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "ColumnSet",
+                    "columns": [
+                      {
+                        "width": "stretch",
+                        "items": [
+                          {
+                            "type": "ActionSet",
+                            "actions": [
+                              {
+                                "type": "Action.OpenUrl",
+                                "title": "View Workflow",
+                                "url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "ActionSet",
+                            "actions": [
+                              {
+                                "type": "Action.OpenUrl",
+                                "title": "View Test Reports",
+                                "url": "${{inputs.report-link}}"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+        EOF
+        )
+        curl -H "Content-Type: application/json" -d "$MESSAGE" "${{ inputs.webhook_url }}"
