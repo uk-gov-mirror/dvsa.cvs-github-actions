@@ -66,24 +66,29 @@ runs:
                           },
                           {
                             "type": "TextBlock",
-                            "text": "**Repository:** ${GITHUB_REPOSITORY}"
+                            "text": "**Repository:** ${GITHUB_REPOSITORY}",
+                            "wrap": true
                           },
                           {
                             "type": "TextBlock",
-                            "text": "**Branch:** ${GITHUB_REF_NAME}"
+                            "text": "**Branch:** ${GITHUB_REF_NAME}",
+                            "wrap": true
                           },
                           {
                             "type": "TextBlock",
                             "text": "**Status:** ${STATUS}",
-                            "color": "${COLOR}"
+                            "color": "${COLOR}",
+                            "wrap": true
                           },
                           {
                             "type": "TextBlock",
-                            "text": "**Project:** ${{ inputs.project }}"
+                            "text": "**Project:** ${{ inputs.project }}",
+                            "wrap": true
                           },
                           {
                             "type": "TextBlock",
-                            "text": "**Other Information:** ${{ inputs.information }}"
+                            "text": "**Other Information:** ${{ inputs.information }}",
+                            "wrap": true
                           }
                         ]
                       }
@@ -111,7 +116,7 @@ runs:
                               {
                                 "type": "Action.OpenUrl",
                                 "title": "View Test Reports",
-                                "url": "${{inputs.report-link}}"
+                                "url": "${{ inputs.report-link }}"
                               }
                             ]
                           }
