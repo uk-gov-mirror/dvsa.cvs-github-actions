@@ -5,9 +5,6 @@ inputs:
   webhook_url:
     description: 'The webhook URL to send the notification to.'
     required: true
-  information:
-    description: 'Extended information.'
-    default: ''
   report-link:
     description: 'The link to the test reports.'
     required: false
@@ -83,11 +80,6 @@ runs:
                           {
                             "type": "TextBlock",
                             "text": "**Project:** ${{ inputs.project }}",
-                            "wrap": true
-                          },
-                          {
-                            "type": "TextBlock",
-                            "text": "**Other Information:** ${{ inputs.information }}",
                             "wrap": true
                           }
                         ]
