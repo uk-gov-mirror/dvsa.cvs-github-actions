@@ -31,7 +31,7 @@ runs:
         {
           "repository": "${GITHUB_REPOSITORY}",
           "branch": "${GITHUB_REF_NAME}",
-          "workflowName": "${GITHUB_WORKFLOW}",
+          "workflowName": "${{ github.workflow }}",
           "status": "${STATUS}",
           "statusColor": "${COLOR}",
           "project": "${{ inputs.project }}",
