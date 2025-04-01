@@ -18,113 +18,14 @@ runs:
     - name: Microsoft Teams Notification
       shell: bash
       run: |
-        STATUS="${{ job.status }}"
-        COLOR="good"
-
-        if [[ "$STATUS" == "failure" ]]; then
-          COLOR="attention"
-        elif [[ "$STATUS" == "cancelled" ]]; then
-          COLOR="warning"
-        fi
-
-        MESSAGE=$(cat <<EOF
-        {
-          "type": "message",
-          "attachments": [
-            {
-              "contentType": "application/vnd.microsoft.card.adaptive",
-              "content": {
-                "\$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                "version": "1.4",
-                "type": "AdaptiveCard",
-                "body": [
-                  {
-                    "type": "ColumnSet",
-                    "columns": [
-                      {
-                        "width": "50px",
-                        "items": [
-                          {
-                            "type": "Image",
-                            "url": "https://raw.githubusercontent.com/Skitionek/notify-microsoft-teams/master/icons/$STATUS.png",
-                            "size": "stretch"
-                          }
-                        ]
-                      },
-                      {
-                        "width": "stretch",
-                        "verticalContentAlignment": "center",
-                        "items": [
-                          {
-                            "type": "TextBlock",
-                            "size": "Large",
-                            "weight": "Bolder",
-                            "text": "${GITHUB_WORKFLOW} Notification"
-                          },
-                          {
-                            "type": "TextBlock",
-                            "text": "**Repository:** ${GITHUB_REPOSITORY}",
-                            "wrap": true
-                          },
-                          {
-                            "type": "TextBlock",
-                            "text": "**Branch:** ${GITHUB_REF_NAME}",
-                            "wrap": true
-                          },
-                          {
-                            "type": "TextBlock",
-                            "text": "**Status:** ${STATUS}",
-                            "color": "${COLOR}",
-                            "wrap": true
-                          },
-                          {
-                            "type": "TextBlock",
-                            "text": "**Project:** ${{ inputs.project }}",
-                            "wrap": true
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "type": "ColumnSet",
-                    "columns": [
-                      {
-                        "width": "stretch",
-                        "items": [
-                          {
-                            "type": "ActionSet",
-                            "actions": [
-                              {
-                                "type": "Action.OpenUrl",
-                                "title": "View Workflow",
-                                "url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-                              }
-                            ]
-                          },
-                          {
-                            "type": "ActionSet",
-                            "actions": [
-                              {
-                                "type": "Action.OpenUrl",
-                                "title": "View Test Reports",
-                                "url": "${{ inputs.report-link }}"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            }
-          ]
-        }
-        EOF
-        )
-
-        echo "===== JSON Payload ====="
-        echo "$MESSAGE"
-
-        curl -H "Content-Type: application/json" -d "$MESSAGE" "${{ inputs.webhook_url }}"
+        curl -X POST ${{ secrets.TEAMS_WEBHOOK_URL }} \
+        -H "Content-Type: application/json" \
+        -d '{
+          "repository": "'"${GITHUB_REPOSITORY}"'",
+          "branch": "'"${GITHUB_REF_NAME}"'",
+          "workflow": "'"${GITHUB_WORKFLOW}"'",
+          "status": "'"${{ job.status }}"'",
+          "project": ${{ inputs.project }}",
+          "workflow_url": "'"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"'",
+          "report_link": ${{ inputs.report-link }}"
+        }'
