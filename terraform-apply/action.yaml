@@ -54,6 +54,7 @@ runs:
         echo 'Terraform Applied ✅' >> $GITHUB_STEP_SUMMARY
 
     - name: 🔓 Unlock State File
+      if: failure()
       uses: dvsa/cvs-github-actions/terraform-state-unlock@develop
       with:
         repository: ${{ inputs.repository}}
