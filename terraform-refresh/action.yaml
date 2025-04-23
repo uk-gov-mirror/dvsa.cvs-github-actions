@@ -30,9 +30,10 @@ runs:
       shell: bash
       env:
         AWS_PROFILE: main
-      run: terraform refresh
+      run: exit 1
 
     - name: 🔓 Unlock State File
+      if: failure ()
       uses: dvsa/cvs-github-actions/terraform-state-unlock@feature/CB2-16609
       with:
         repository: ${{ inputs.repository}}
