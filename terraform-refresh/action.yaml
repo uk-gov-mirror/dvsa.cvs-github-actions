@@ -26,6 +26,7 @@ runs:
         create-workspace: ${{ inputs.create-workspace }}
 
     - name: Refresh Terraform
+      id: refresh
       continue-on-error: true
       shell: bash
       env:
@@ -33,6 +34,7 @@ runs:
       run: terraform refresh
 
     - name: 🔓 Unlock State File
+      if: steps.refresh.outcome == 'failure'
       uses: dvsa/cvs-github-actions/terraform-state-unlock@feature/CB2-16609
       with:
         repository: ${{ inputs.repository}}
