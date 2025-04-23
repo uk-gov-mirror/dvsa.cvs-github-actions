@@ -32,6 +32,7 @@ runs:
       with:
         terraform-version: ${{ inputs.terraform-version }}
         environment-name: ${{ inputs.environment-name }}
+        repository: ${{ inputs.repository }}
         create-workspace: 'false'
 
     - name: Remove VPC Connections
