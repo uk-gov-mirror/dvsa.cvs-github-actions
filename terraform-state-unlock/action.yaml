@@ -28,6 +28,8 @@ runs:
         create-workspace: ${{ inputs.create-workspace }}
 
     - name: 🔓 Unlock State File
+      env:
+        AWS_PROFILE: main 
       shell: bash
       run: |
         bucket=${{ inputs.repository }}${{ inputs.repository == 'cvs-tf' && '-environment' || '' }}
