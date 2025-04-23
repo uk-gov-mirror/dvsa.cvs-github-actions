@@ -1,0 +1,47 @@
+name: Send Teams Notification
+description: 'Send a notification to Teams channel via Webhook.'
+
+inputs:
+  webhook_url:
+    description: 'The webhook URL to send the notification to.'
+    required: true
+  report-link:
+    description: 'The link to the test reports.'
+    required: false
+  project:
+    description: The project being tested
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Send Teams Notification
+      shell: bash
+      run: |
+        STATUS="${{ job.status }}"
+        COLOR="good"
+
+        if [[ "$STATUS" == "failure" ]]; then
+          COLOR="attention"
+        elif [[ "$STATUS" == "cancelled" ]]; then
+          COLOR="warning"
+        fi
+
+        MESSAGE=$(cat <<EOF
+        {
+          "repository": "${GITHUB_REPOSITORY}",
+          "branch": "${GITHUB_REF_NAME}",
+          "workflowName": "${{ github.workflow }}",
+          "status": "${STATUS}",
+          "statusColor": "${COLOR}",
+          "project": "${{ inputs.project }}",
+          "workflowUrl": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}",
+          "reportLink": "${{ inputs.report-link }}"
+        }
+        EOF
+        )
+
+        echo "===== JSON Payload Sent to Power Automate ====="
+        echo "$MESSAGE"
+
+        curl -H "Content-Type: application/json" -d "$MESSAGE" "${{ inputs.webhook_url }}"
