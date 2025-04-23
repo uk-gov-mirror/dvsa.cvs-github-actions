@@ -69,7 +69,7 @@ runs:
         encryption-key: ${{ inputs.encryption-key }}
         
     - name: Remove Workspace
-      if: ${{ inputs.dry-run == 'false' && steps.refresh.outcome == 'success' && steps.plan.outputs.changes-detected == 'true' && steps.apply.outcome == 'success' }}
+      if: ${{ inputs.dry-run == 'false' && steps.refresh.outcome == 'success' && steps.plan.outputs.outcome == 'success' && steps.apply.outcome == 'success' }}
       shell: bash
       run: |
         # Remove ${{ inputs.environment-name }} Workspace

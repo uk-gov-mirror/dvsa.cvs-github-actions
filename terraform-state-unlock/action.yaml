@@ -28,7 +28,6 @@ runs:
         create-workspace: ${{ inputs.create-workspace }}
 
     - name: 🔓 Unlock State File
-      if: failure()
       shell: bash
       run: |
         bucket=${{ inputs.repository }}${{ inputs.repository == 'cvs-tf' && '-environment' || '' }}
