@@ -34,7 +34,7 @@ runs:
       run: terraform refresh
 
     - name: 🔓 Unlock State File
-      if: ${{ steps.refresh.outcome = 'failure' }}
+      if: steps.refresh.outcome == 'failure'
       uses: dvsa/cvs-github-actions/terraform-state-unlock@feature/CB2-16609
       with:
         repository: ${{ inputs.repository}}
