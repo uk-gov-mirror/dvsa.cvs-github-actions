@@ -29,22 +29,26 @@ runs:
 
     - name: 🔓 Unlock State File
       shell: bash
+      env:
+        environment_name: ${{ inputs.environment-name }}
+        repository: ${{ inputs.repository }}
+        AWS_PROFILE: main
       run: |
-        if [ "${{ inputs.repository }}" = "cvs-tf" ]; then
-          bucket="${{ inputs.repository }}-environment"
+        if [ "$repository" = "cvs-tf" ]; then
+          bucket="${repository}-environment"
         else
-          bucket="${{ inputs.repository }}"
+          bucket="$repository"
         fi
 
-        key="${bucket}/env:/${{ inputs.environment-name }}/tf_state"
+        key="${bucket}/env:/${environment_name}/tf_state"
 
         lock_id=$(aws dynamodb get-item --table-name "$bucket" \
           --key "{\"LockID\": {\"S\": \"$key\"}}" \
           --attributes-to-get "Info" --profile "mgmt" | jq -r '.[].Info.S | fromjson | .ID')
 
         if [ -n "$lock_id" ]; then
-          echo "Attempting to unlock Terraform state for ${{ inputs.environment-name }}..."
+          echo "Attempting to unlock Terraform state for $environment_name..."
           terraform force-unlock -force "$lock_id"
         else
-          echo "No lock found for environment ${{ inputs.environment-name }}"
+          echo "No lock found for environment $environment_name"
         fi
