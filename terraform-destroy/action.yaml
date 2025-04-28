@@ -16,6 +16,9 @@ inputs:
   dry-run:
     description: Don't perform action, just output information
     default: "true"
+  repository:
+    description: The name of the repository
+    default: 'cvs-tf'
 
 runs:
   using: composite
