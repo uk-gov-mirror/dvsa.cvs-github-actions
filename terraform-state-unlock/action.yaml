@@ -30,9 +30,6 @@ runs:
     - name: 🔓 Unlock State File 
       shell: bash
       run: |
-        environment_name="${{ inputs.environment-name }}"
-        repository="${{ inputs.repository }}"
-
         if [ "$repository" = "cvs-tf" ]; then
           bucket="${repository}-environment"
         else
