@@ -8,6 +8,9 @@ inputs:
   service-bucket:
     description: The bucket hosting the Hash Files (default `cvs-services`)
     default: cvs-services
+  aretefacts-bucket:
+    description: The new bucket which is hosting the Hash files for updated services
+    default: cvs-service-artefacts
   dry-run:
     description: Don't perform action, just output information
     default: "true"
@@ -19,8 +22,17 @@ runs:
       id: remove_hash_files
       shell: bash
       run: |
-        # Remove all hash files for ${{ inputs.environment-name }}
-        hashes=$(aws s3api list-objects-v2 --bucket ${{ inputs.service-bucket }} --query 'Contents[?Key.contains(@,`${{ inputs.environment-name }}.txt`)].Key' | jq -r '.[]')
-        for hash in $hashes; do
-          AWS_PROFILE=mgmt aws s3 rm s3://${{ inputs.service-bucket }}/$hash ${{ inputs.dry-run == 'true' && '--dryrun' || '' }}
+        echo "🔍 Searching and removing hash files for '${{ inputs.environment-name }}.txt'"
+
+        for BUCKET in "${{ inputs.service-bucket }}" "${{ inputs.artefacts-bucket }}"; do
+          echo "🪣 Checking bucket: $BUCKET"
+          hashes=$(aws s3api list-objects-v2 \
+            --bucket "$BUCKET" \
+            --query "Contents[?contains(Key, '${{ inputs.environment-name }}.txt')].Key" \
+            | jq -r '.[]')
+
+          for hash in $hashes; do
+            echo "🗑️ Deleting $hash from $BUCKET"
+            AWS_PROFILE=mgmt aws s3 rm s3://$BUCKET/$hash ${{ inputs.dry-run == 'true' && '--dryrun' || '' }}
+          done
         done
