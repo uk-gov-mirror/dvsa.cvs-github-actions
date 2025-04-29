@@ -35,7 +35,7 @@ runs:
 
     - name: 🔓 Unlock State File
       if: steps.refresh.outcome == 'failure'
-      uses: dvsa/cvs-github-actions/terraform-state-unlock@feature/CB2-16609
+      uses: dvsa/cvs-github-actions/terraform-state-unlock@develop
       with:
         repository: ${{ inputs.repository }}
         environment-name: ${{ inputs.environment-name }}
