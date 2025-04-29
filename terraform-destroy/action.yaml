@@ -32,7 +32,7 @@ runs:
 
     - name: Refresh Terraform
       id: refresh
-      uses: dvsa/cvs-github-actions/terraform-refresh@feature/CB2-16609
+      uses: dvsa/cvs-github-actions/terraform-refresh@develop
       with:
         terraform-version: ${{ inputs.terraform-version }}
         environment-name: ${{ inputs.environment-name }}
