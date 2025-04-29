@@ -26,10 +26,7 @@ runs:
 
         for BUCKET in "${{ inputs.service-bucket }}" "${{ inputs.artefacts-bucket }}"; do
           echo "🪣 Checking bucket: $BUCKET"
-          hashes=$(aws s3api list-objects-v2 \
-            --bucket "$BUCKET" \
-            --query "Contents[?contains(Key, '${{ inputs.environment-name }}.txt')].Key" \
-            | jq -r '.[]')
+          hashes=$(aws s3api list-objects-v2 --bucket "$BUCKET" --query "Contents[?contains(Key, '${{ inputs.environment-name }}.txt')].Key" | jq -r '.[]')
 
           for hash in $hashes; do
             echo "🗑️ Deleting $hash from $BUCKET"
