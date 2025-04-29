@@ -76,7 +76,7 @@ runs:
 
     - name: Remove Hash Files
       id: remove_hash_files
-      uses: dvsa/cvs-github-actions/hash-delete@feature/CB2-17519
+      uses: dvsa/cvs-github-actions/hash-delete@develop
       with:
         environment-name: ${{ inputs.environment-name }}
         dry-run: ${{ inputs.dry-run }}
