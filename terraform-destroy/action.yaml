@@ -16,6 +16,9 @@ inputs:
   dry-run:
     description: Don't perform action, just output information
     default: "true"
+  repository:
+    description: The name of the repository
+    default: 'cvs-tf'
 
 runs:
   using: composite
@@ -28,10 +31,13 @@ runs:
         create-workspace: 'false'
 
     - name: Refresh Terraform
-      shell: bash
-      env:
-        AWS_PROFILE: main
-      run: terraform refresh
+      id: refresh
+      uses: dvsa/cvs-github-actions/terraform-refresh@develop
+      with:
+        terraform-version: ${{ inputs.terraform-version }}
+        environment-name: ${{ inputs.environment-name }}
+        repository: ${{ inputs.repository }}
+        create-workspace: 'false'
 
     - name: Remove VPC Connections
       shell: bash   
@@ -46,6 +52,7 @@ runs:
 
     - name: Terraform Plan
       id: plan
+      if: ${{ steps.refresh.outcome == 'success' }}
       uses: dvsa/cvs-github-actions/terraform-plan@develop
       with:
         options: '-destroy'
@@ -57,7 +64,8 @@ runs:
         infracost-key: ${{ inputs.infracost-key }}
 
     - name: Terraform Apply
-      if: ${{ inputs.dry-run == 'false' && steps.plan.outputs.changes-detected == 'true' }}
+      id: apply
+      if: ${{ inputs.dry-run == 'false' && steps.refresh.outcome == 'success' && steps.plan.outputs.changes-detected == 'true' }}
       uses: dvsa/cvs-github-actions/terraform-apply@develop
       with:
         terraform-version: ${{ inputs.terraform-version }}
@@ -66,7 +74,7 @@ runs:
         encryption-key: ${{ inputs.encryption-key }}
         
     - name: Remove Workspace
-      if: ${{ inputs.dry-run == 'false' }}
+      if: ${{ inputs.dry-run == 'false' && steps.refresh.outcome == 'success' && steps.plan.outputs.outcome == 'success' && steps.apply.outcome == 'success' }}
       shell: bash
       run: |
         # Remove ${{ inputs.environment-name }} Workspace

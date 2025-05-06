@@ -102,17 +102,8 @@ runs:
         infracost output --path breakdown.json --format github-comment >> $GITHUB_STEP_SUMMARY
 
     - name: 🔓 Unlock State File
-      if: failure()
-      shell: bash
-      run: |
-        bucket=${{ inputs.repository }}${{ inputs.repository == 'cvs-tf' && '-environment' || '' }}
-        key="${bucket}/env:/${{ inputs.environment-name }}/tf_state"
-
-        lock_id=$(aws dynamodb get-item --table-name $bucket \
-          --key "{\"LockID\": {\"S\": \"$key\"}}" \
-          --attributes-to-get "Info" --profile "mgmt" | jq -r '.[].Info.S | fromjson | .ID')
-
-        if [ -n "$lock_id" ]; then
-          echo "Attempting to unlock Terraform state for ${{ inputs.environment-name }}..."
-          terraform force-unlock $lock_id <<< "yes"
-        fi
+      if: ${{ steps.plan.outcome == 'success' }}
+      uses: dvsa/cvs-github-actions/terraform-state-unlock@develop
+      with:
+        repository: ${{ inputs.repository}}
+        environment-name: ${{ inputs.environment-name }}
