@@ -7,7 +7,7 @@ inputs:
     required: true
   service-bucket:
     description: The bucket hosting the Hash Files (default `cvs-services`)
-    default: cvs-services
+    default: '["cvs-services","cvs-service-artefacts"]'
   dry-run:
     description: Don't perform action, just output information
     default: "true"
@@ -19,22 +19,10 @@ runs:
       id: remove_hash_files
       shell: bash
       run: |
-        # Try default or provided bucket first
-        buckets=("${{ inputs.service-bucket }}")
-
-        # If using default bucket, also check the artefacts bucket
-        if [[ "${{ inputs.service-bucket }}" == "cvs-services" ]]; then
-          buckets+=("cvs-service-artefacts")
-        fi
-
-        for bucket in "${buckets[@]}"; do
-          echo "Checking bucket: $bucket"
-          hashes=$(aws s3api list-objects-v2 --bucket "$bucket" \
-            --query "Contents[?contains(Key, '${{ inputs.environment-name }}.txt')].Key" \
-            | jq -r '.[]')
-
+        # Remove all hash files for ${{ inputs.environment-name }}
+        for bucket in '${{ fromJson(inputs.service-bucket) }}'; do
+          hashes=$(aws s3api list-objects-v2 --bucket ${bucket} --query 'Contents[?Key.contains(@,`${{ inputs.environment-name }}.txt`)].Key' | jq -r '.[]')
           for hash in $hashes; do
-            echo "Found: s3://$bucket/$hash"
-            AWS_PROFILE=mgmt aws s3 rm s3://$bucket/$hash $([[ "${{ inputs.dry-run }}" == "true" ]] && echo "--dryrun")
+            AWS_PROFILE=mgmt aws s3 rm s3://${bucket}/$hash ${{ inputs.dry-run == 'true' && '--dryrun' || '' }}
           done
         done
