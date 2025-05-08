@@ -19,10 +19,10 @@ runs:
       id: remove_hash_files
       shell: bash
       run: |
-        buckets=$(echo '${{ inputs.service-bucket }}' | jq -r '.[]')
-        for bucket in $buckets; do
-          hashes=$(aws s3api list-objects-v2 --bucket "$buckets" --query "Contents[?contains(Key, '${{ inputs.environment-name }}.txt')].Key" | jq -r '.[]')
+        # Remove all hash files for ${{ inputs.environment-name }}
+        for bucket in '${{ fromJson(inputs.service-bucket) }}'; do
+          hashes=$(aws s3api list-objects-v2 --bucket ${bucket} --query 'Contents[?Key.contains(@,`${{ inputs.environment-name }}.txt`)].Key' | jq -r '.[]')
           for hash in $hashes; do
-            AWS_PROFILE=mgmt aws s3 rm s3://$buckets/$hash $([[ "${{ inputs.dry-run }}" == "true" ]] && echo "--dryrun")
+            AWS_PROFILE=mgmt aws s3 rm s3://${bucket}/$hash ${{ inputs.dry-run == 'true' && '--dryrun' || '' }}
           done
         done
