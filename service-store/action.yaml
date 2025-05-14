@@ -33,7 +33,6 @@ runs:
         REPO_FOLDER_NAME="${GITHUB_REPOSITORY##*/}"
 
         for file in *.zip; do
-          # Extract function name — everything before the last two dashes (for semantic-style names)
           SERVICE_NAME=$(echo "$file" | rev | cut -d'-' -f3- | rev)
 
           LAMBDA_SHA=$(openssl dgst -sha256 -binary "$file" | openssl enc -base64)
