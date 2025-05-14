@@ -31,9 +31,19 @@ runs:
 
         REPO_FOLDER_NAME="${GITHUB_REPOSITORY##*/}"
 
-        for file in $(ls *.zip); do
-          LAMBDA_SHA=$(openssl dgst -sha256 -binary ${file} | openssl enc -base64)
-          echo "Uploading ${file} to s3://${{ inputs.s3_bucket }}/${REPO_FOLDER_NAME}/${file%-*-*}/"
-          echo -n ${{ github.sha }} | aws s3 cp - "s3://${{ inputs.s3_bucket }}/${REPO_FOLDER_NAME}/${file%-*-*}/latestHash_${{ inputs.environment_name }}.txt" --content-type "text/plain"
-          aws s3 cp "${file}" "s3://${{ inputs.s3_bucket }}/${REPO_FOLDER_NAME}/${file%-*-*}/${{ github.sha }}.zip" --metadata "sha256sum=${LAMBDA_SHA},Tag=${{ inputs.service_name }},commit=${{ github.sha }}"
+        for file in *.zip; do
+          SERVICE_NAME=$(echo "$file" | sed -E 's/-[a-f0-9]{40}\.zip$//')
+
+          LAMBDA_SHA=$(openssl dgst -sha256 -binary "$file" | openssl enc -base64)
+
+          echo "Uploading to s3://${{ inputs.s3_bucket }}/${REPO_FOLDER_NAME}/${SERVICE_NAME}/"
+
+          # Upload hash file
+          echo -n "${{ github.sha }}" | aws s3 cp - \
+            "s3://${{ inputs.s3_bucket }}/${REPO_FOLDER_NAME}/${SERVICE_NAME}/latestHash_${{ inputs.environment_name }}.txt" \
+            --content-type "text/plain"
+
+          aws s3 cp "$file" \
+            "s3://${{ inputs.s3_bucket }}/${REPO_FOLDER_NAME}/${SERVICE_NAME}/${{ github.sha }}.zip" \
+            --metadata "sha256sum=${LAMBDA_SHA},Tag=${{ inputs.service_name }},commit=${{ github.sha }}"
         done
