@@ -29,16 +29,17 @@ runs:
         # Gather SHA256 for function artifacts, upload to S3 and create Hash Files
         cd artifacts
 
+        # Get repo name from GitHub context
         REPO_FOLDER_NAME="${GITHUB_REPOSITORY##*/}"
 
         for file in *.zip; do
-          SERVICE_NAME=$(echo "$file" | sed -E 's/-[a-f0-9]{40}\.zip$//')
+          # Extract function name — everything before the last two dashes (for semantic-style names)
+          SERVICE_NAME=$(echo "$file" | rev | cut -d'-' -f3- | rev)
 
           LAMBDA_SHA=$(openssl dgst -sha256 -binary "$file" | openssl enc -base64)
 
-          echo "Uploading to s3://${{ inputs.s3_bucket }}/${REPO_FOLDER_NAME}/${SERVICE_NAME}/"
+          echo "Uploading ${file} to s3://${{ inputs.s3_bucket }}/${REPO_FOLDER_NAME}/${SERVICE_NAME}/"
 
-          # Upload hash file
           echo -n "${{ github.sha }}" | aws s3 cp - \
             "s3://${{ inputs.s3_bucket }}/${REPO_FOLDER_NAME}/${SERVICE_NAME}/latestHash_${{ inputs.environment_name }}.txt" \
             --content-type "text/plain"
