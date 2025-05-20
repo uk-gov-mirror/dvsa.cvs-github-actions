@@ -4,6 +4,10 @@ on:
   repository_dispatch:
     types: [create, create & build, build, delete]
 
+permissions:
+  contents: write
+  id-token: write
+
 jobs:
   receiver:
     name: Event Recieved - ${{ github.event_name }} ${{ github.event.sender }}
