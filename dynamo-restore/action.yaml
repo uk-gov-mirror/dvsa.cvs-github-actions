@@ -36,6 +36,9 @@ runs:
           target_table_name=$(aws dynamodb list-tables | jq -r --arg table $(sed -E 's/${{ env.source }}/${{ env.destination }}/g' <<< ${table}) '[.TableNames[] | select(. | contains($table))][0]')
         fi
 
+        # Capture Table Streaming Config
+        stream_specification=$(aws dynamodb describe-table --table-name ${target_table_name} | jq -rc '.Table.StreamSpecifiation')
+
         # Delete PreProd Table
         printf "# \033[0;34mDelete table \033[0m${target_table_name}\n"
         aws dynamodb delete-table --table-name "arn:aws:dynamodb:eu-west-1:${account}:table/${target_table_name}" \
@@ -57,4 +60,9 @@ runs:
         if [[ "${{ inputs.enable-backups }}" == "false" ]]; then
           printf "# \033[0;34mDisable Point In Time Recovery (PITR) on \033[0m${{ inputs.dynamo-table }}\n"
           aws dynamodb update-continuous-backups --table-name "${{ inputs.dynamo-table }}" --point-in-time-recovery-specification PointInTimeRecoveryEnabled=${{ inputs.enable-backups }}
+        fi
+
+        # Enable Streams (if required)
+        if [[ "${stream_specification}" != "null" ]]; then
+          aws dynamodb update-table --table-name ${target_table_name} --stream-specification ${stream_specification}
         fi
