@@ -28,9 +28,22 @@ runs:
       run: |
         # Gather SHA256 for function artifacts, upload to S3 and create Hash Files
         cd artifacts
-        for file in $(ls *.zip); do
-          LAMBDA_SHA=$(openssl dgst -sha256 -binary ${file} | openssl enc -base64)
-          echo -n ${{ github.sha }} | aws s3 cp - s3://${{ inputs.s3_bucket }}/${file%-*-*}/latestHash_${{ inputs.environment_name }}.txt --content-type "text/plain" 2>&1
-          aws s3 cp ${file} "s3://${{ inputs.s3_bucket }}/${file%-*-*}/${{ github.sha }}.zip" --metadata "sha256sum=${LAMBDA_SHA},Tag=${{ inputs.service_name }},commit=${{ github.sha }}"
-        done        
 
+        # Get repo name from GitHub context
+        REPO_FOLDER_NAME="${GITHUB_REPOSITORY##*/}"
+
+        for file in *.zip; do
+          SERVICE_NAME=$(echo "$file" | rev | cut -d'-' -f3- | rev)
+
+          LAMBDA_SHA=$(openssl dgst -sha256 -binary "$file" | openssl enc -base64)
+
+          echo "Uploading ${file} to s3://${{ inputs.s3_bucket }}/${REPO_FOLDER_NAME}/${SERVICE_NAME}/"
+
+          echo -n "${{ github.sha }}" | aws s3 cp - \
+            "s3://${{ inputs.s3_bucket }}/${REPO_FOLDER_NAME}/${SERVICE_NAME}/latestHash_${{ inputs.environment_name }}.txt" \
+            --content-type "text/plain"
+
+          aws s3 cp "$file" \
+            "s3://${{ inputs.s3_bucket }}/${REPO_FOLDER_NAME}/${SERVICE_NAME}/${{ github.sha }}.zip" \
+            --metadata "sha256sum=${LAMBDA_SHA},Tag=${{ inputs.service_name }},commit=${{ github.sha }}"
+        done
