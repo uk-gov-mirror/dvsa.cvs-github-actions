@@ -24,10 +24,12 @@ on:
         required: false
         type: boolean
         description: Don't perform action, just output information
+      aws_role:
+        required: true
+        type: string
+  
     secrets:
       GH_TOKEN:
-        required: true
-      AWS_ROLE:
         required: true
 
 permissions:
@@ -126,7 +128,7 @@ jobs:
       - name: 🪪 Get Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE }}
+          role-to-assume: ${{ inputs.aws_role }}
           aws-region: ${{ vars.DVSA_AWS_REGION }}
           role-session-name: gha_seed_tables_${{ needs.environment.outputs.service-name }}_${{ needs.environment.outputs.environment-name }}
 
