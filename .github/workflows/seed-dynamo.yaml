@@ -139,7 +139,6 @@ jobs:
           echo "table-name=${table_name}"
           echo "table-name=${table_name}" >> $GITHUB_OUTPUT
 
-
       - name: 🧹 Purge Table
         uses: dvsa/cvs-github-actions/table-purge@develop
         with:
