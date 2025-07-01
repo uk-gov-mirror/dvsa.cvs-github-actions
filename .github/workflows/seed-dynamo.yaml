@@ -1,0 +1,101 @@
+name: 🌱 Seed Tables
+run-name: "${{ github.actor }} - ${{ github.run_id }}"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        default: feature
+        required: true
+        type: string
+        description: The environment to deploy to
+      dry-run:
+        default: false
+        required: false
+        type: boolean
+        description: Don't perform action, just output information
+
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+
+jobs:
+  environment:
+    name: 🧹 Prepare Environment
+    runs-on: [ubuntu-latest]
+    outputs:
+      github-branch: ${{ steps.environment.outputs.github-branch }}
+      environment-name: ${{ steps.settings.outputs.environment-name }}
+      environment-type: ${{ steps.settings.outputs.environment-type }}
+      service-name: ${{ steps.package.outputs.service-name }}
+      seed-target: ${{ steps.seed-target.outputs.seed-target }}
+      dry-run: ${{ steps.settings.outputs.dry-run }}
+
+    steps:
+      - name: 📥 Get Codebase
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'schedule' && 'main' || github.ref_name }}
+
+      - name: 📦 Read Package
+        id: package
+        run: |
+          package=$(cat package.json | jq -c)
+          echo "service-name=$(jq -rc '.name' <<< ${package})" >> $GITHUB_OUTPUT
+
+      - name: ↕️ Get Environment Details
+        id: environment
+        uses: dvsa/cvs-github-actions/environment@develop
+        with:
+          environment: ${{ github.ref_name }}
+          output-summary: false
+
+      - name: 🎯 Seed Target
+        id: seed-target
+        run: |
+          # Get Seed Targets from `serverless.yml`
+          if [[ -e "serverless.yml" ]]; then
+            # Grab the Seed Sources location as JSON from the YAML
+            seeds=$(yq '.custom.dynamodb.seed.dev.sources' serverless.yml -o json)
+            if [[ "${seeds}" != "null" ]]; then
+              # Clean up the database names and output to GHA
+              seed=$(jq -c '. | to_entries | map({table:(.value.table | sub("\\w.+\\W-"; "")), seed_file:.value.sources.[]})' <<< "${seeds}")
+              echo "seed-target=${seed}"
+              echo "seed-target=$(jq -c <<< $seed)" >> $GITHUB_OUTPUT
+            else
+              echo "No tables to seed"
+              echo "No tables to seed" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+      - name: Calculate Deployment Settings
+        id: settings
+        run: |
+          # Calculate Deployment Settings
+          # Calculate if this should be considered a dry run (e.g. the environment requested does not match the calculated environment type)
+          # A dry run will not run the Terraform Apply step - so is useful for terraforn planning
+          # The dry run flag is passed into steps to override default behaviour
+          dry_run=${{ inputs.dry-run || (steps.environment.outputs.environment-type == 'feature' && (inputs.environment || 'develop') != 'feature') }}
+          # Set Environment based on provided inputs
+          if [[ "${{ steps.environment.outputs.environment-type}}" == "feature" ]]; then
+            environment_name=${{ steps.environment.outputs.environment-name }}
+            environment_type=${{ steps.environment.outputs.environment-type }}
+          else
+            environment_name=${{ env.ENVIRONMENT }}
+            environment_type=${{ env.ENVIRONMENT }}
+          fi
+          # Send Outputs to GitHub
+          echo "environment-name=${environment_name}" >> $GITHUB_OUTPUT
+          echo "environment-type=${environment_type}" >> $GITHUB_OUTPUT
+          echo "dry-run=${dry_run}" >> $GITHUB_OUTPUT
+          # Output a summary of calculated values, for user reference
+          echo "## Deployment Settings" >> $GITHUB_STEP_SUMMARY
+          formatted_tables=$(jq -r 'map(.table | gsub("-"; " ")) | join(", ")' <<< '${{ steps.seed-target.outputs.seed-target }}') >> $GITHUB_STEP_SUMMARY
+          echo "| Tables to Seed | ${formatted_tables} |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| TF Workspace | ${environment_name} |" >> $GITHUB_STEP_SUMMARY
+          echo "| GitHub Environment | ${environment_type} |" >> $GITHUB_STEP_SUMMARY
+          echo "| GitHub Branch | $([[ '${{ github.event_name }}' == 'schedule' ]] && echo 'main' || echo '${{ steps.environment.outputs.github-branch }}') |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dry Run | ${dry_run} |" >> $GITHUB_STEP_SUMMARY
+
