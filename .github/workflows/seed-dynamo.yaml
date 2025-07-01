@@ -24,6 +24,11 @@ on:
         required: false
         type: boolean
         description: Don't perform action, just output information
+    secrets:
+      GH_TOKEN:
+        required: true
+      AWS_ROLE:
+        required: true
 
 permissions:
   id-token: write
@@ -100,3 +105,48 @@ jobs:
           echo "| GitHub Environment | ${environment_type} |" >> $GITHUB_STEP_SUMMARY
           echo "| GitHub Branch | $([[ '${{ github.event_name }}' == 'schedule' ]] && echo 'main' || echo '${{ steps.environment.outputs.github-branch }}') |" >> $GITHUB_STEP_SUMMARY
           echo "| Dry Run | ${dry_run} |" >> $GITHUB_STEP_SUMMARY
+
+  seed-tables:
+    name: 🌱 Seed ${{ matrix.seed-target.table }}
+    runs-on:
+      - ubuntu-latest
+    needs:
+      - environment
+    environment: ${{ needs.environment.outputs.environment-type }}
+    strategy:
+      matrix:
+        seed-target: ${{ fromJson(needs.environment.outputs.seed-target) }}
+    steps:
+      - name: 📥 Get Codebase
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          ref: ${{ needs.environment.outputs.github-branch }}
+
+      - name: 🪪 Get Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE }}
+          aws-region: ${{ vars.DVSA_AWS_REGION }}
+          role-session-name: gha_seed_tables_${{ needs.environment.outputs.service-name }}_${{ needs.environment.outputs.environment-name }}
+
+      - name: 📇 Get Table Name
+        id: table_name
+        run: |
+          table_name=$(aws dynamodb list-tables | jq -r '.TableNames[] | select(. | contains("cvs-${{ needs.environment.outputs.environment-name }}-${{ matrix.seed-target.table }}"))')
+          echo "table-name=${table_name}"
+          echo "table-name=${table_name}" >> $GITHUB_OUTPUT
+
+
+      - name: 🧹 Purge Table
+        uses: dvsa/cvs-github-actions/table-purge@develop
+        with:
+          table: ${{ steps.table_name.outputs.table-name }}
+          dry-run: ${{ inputs.dry-run }}
+
+      - name: 🌱 Re-Seed Table
+        uses: dvsa/cvs-github-actions/table-seed@develop
+        if: ${{ !inputs.dry-run }}
+        with:
+          table: ${{ steps.table_name.outputs.table-name }}
+          seed-file: ${{ matrix.seed-target.seed_file }}
