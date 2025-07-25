@@ -16,6 +16,12 @@ inputs:
   create-workspace:
     description: Should a new Terraform Workspace be created
     default: 'true'
+  folder-name:
+    description: Optional folder name, if not in repository
+    default: '.'
+  state-account:
+    description: Does TF use the Core Standard
+    required: false
   repository:
     description: The name of the repository
     default: 'cvs-tf'
@@ -29,6 +35,7 @@ runs:
     - name: Initialize Terraform
       uses: dvsa/cvs-github-actions/terraform-initialize@develop
       with:
+        folder-name: ${{ inputs.folder-name }}
         terraform-version: ${{ inputs.terraform-version }}
         environment-name: ${{ inputs.environment-name }}
         create-workspace: ${{ inputs.create-workspace }}
@@ -37,6 +44,7 @@ runs:
       uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.plan-id }}
+        path: ${{ inputs.folder-name }}
 
     - name: Decrypt Plan File
       uses: dvsa/cvs-github-actions/aws-encrypt@develop
@@ -44,13 +52,14 @@ runs:
       with:
         action: decrypt
         encryption-key: ${{ inputs.encryption-key }}
-        file: terraform.tfplan
+        file: ${{ inputs.folder-name }}/terraform.tfplan
 
     - name: Terraform Apply
       shell: bash
       run: |
         # Apply Terraform from a Plan
-        terraform apply ${{ inputs.options }} -lock-timeout=300s terraform.tfplan
+        cd ${{ inputs.folder-name }}
+        terraform apply -lock-timeout=300s terraform.tfplan
         echo 'Terraform Applied ✅' >> $GITHUB_STEP_SUMMARY
 
     - name: 🔓 Unlock State File

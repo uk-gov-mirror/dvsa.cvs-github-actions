@@ -11,6 +11,9 @@ inputs:
   create-workspace:
     description: Should a new Terraform Workspace be created
     default: 'false'
+  folder-name:
+    description: Optional folder name, if not in repository
+    default: '.'
 
 runs:
   using: composite
@@ -19,6 +22,7 @@ runs:
     - name: Initialize Terraform
       uses: dvsa/cvs-github-actions/terraform-initialize@develop
       with:
+        folder-name: ${{ inputs.folder-name }}
         terraform-version: ${{ inputs.terraform-version }}
         environment-name: ${{ inputs.environment-name }}
         create-workspace: ${{ inputs.create-workspace }}
@@ -27,6 +31,8 @@ runs:
       continue-on-error: true
       shell: bash
       run: |
+        # Format Terraform
+        cd ${{ inputs.folder-name }}
         terraform fmt -check=true -diff=true || true
       
     - name: Chekov Scan
