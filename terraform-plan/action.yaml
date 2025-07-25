@@ -19,6 +19,12 @@ inputs:
   create-workspace:
     description: Should a new Terraform Workspace be created
     default: 'true'
+  folder-name:
+    description: Optional folder name, if not in repository
+    default: '.'
+  state-account:
+    description: Account Name for Core TF Standard
+    required: false
   repository:
     description: The name of the repository
     default: 'cvs-tf'
@@ -39,9 +45,11 @@ runs:
     - name: Initialize Terraform
       uses: dvsa/cvs-github-actions/terraform-initialize@develop
       with:
+        folder-name: ${{ inputs.folder-name }}
         terraform-version: ${{ inputs.terraform-version }}
         environment-name: ${{ inputs.environment-name }}
         create-workspace: ${{ inputs.create-workspace }}
+        state-account: ${{ inputs.state-account }}
 
     - name: ✅ Terraform Validate
       shell: bash
@@ -55,7 +63,8 @@ runs:
       shell: bash
       run: |
         # Create Terraform Plan File
-        terraform plan ${{ inputs.options }} -out terraform.tfplan
+        cd ${{ inputs.folder-name }}
+        terraform plan ${{ inputs.options }}${{ inputs.state-account != '' && ' -var-file=environments/$(terraform workspace show).tfvars' || '' }} -out terraform.tfplan
         terraform show terraform.tfplan -no-color > plan.txt
         echo 'Plan Completed ✅' >> $GITHUB_STEP_SUMMARY
         plan_detail=$(terraform show -no-color terraform.tfplan | grep -E 'Plan:|Your infrastructure' || echo "No environment currently deployed")
@@ -74,14 +83,14 @@ runs:
       with:
         action: encrypt
         encryption-key: ${{ inputs.encryption-key }}
-        file: terraform.tfplan
+        file: ${{ inputs.folder-name }}/terraform.tfplan
 
     - name: 📝 Upload Plan
       uses: actions/upload-artifact@v4
       with:
         name: plan-${{ github.run_id }}
         path: |
-          terraform.tfplan${{ inputs.encryption-key != '' && '.encrypted' || '' }}
+          ${{ inputs.folder-name }}/terraform.tfplan${{ inputs.encryption-key != '' && '.encrypted' || '' }}
         retention-days: ${{ inputs.plan-retention }}
 
     # Run Infracost to get idea of cost changes
@@ -97,12 +106,12 @@ runs:
       if: ${{ !steps.infracost.outcome == 'failure' }}
       run: |
         # Generate Infracost Information
-        terraform show -json terraform.tfplan > plan.json
+        terraform show -json ${{ inputs.folder-name }}/terraform.tfplan > plan.json
         infracost breakdown --path plan.json --format json --out-file breakdown.json
         infracost output --path breakdown.json --format github-comment >> $GITHUB_STEP_SUMMARY
 
     - name: 🔓 Unlock State File
-      if: ${{ steps.plan.outcome == 'success' }}
+      if: ${{ steps.plan.outcome != 'success' }}
       uses: dvsa/cvs-github-actions/terraform-state-unlock@develop
       with:
         repository: ${{ inputs.repository}}

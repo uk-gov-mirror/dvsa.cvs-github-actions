@@ -8,6 +8,15 @@ inputs:
   terraform-version:
     description: The version of Terraform to use (defaults to 1.7.3)
     default: 1.7.3
+  folder-name:
+    description: Optional folder name, if not in repository
+    default: '.'
+  state-account:
+    description: Account Name for Core TF Standard
+    required: false
+  repository:
+    description: The name of the repository
+    default: 'cvs-tf'
   encryption-key:
     description: ARN of a KMS Key to use for Encryption
     required: false
@@ -16,9 +25,6 @@ inputs:
   dry-run:
     description: Don't perform action, just output information
     default: "true"
-  repository:
-    description: The name of the repository
-    default: 'cvs-tf'
 
 runs:
   using: composite
@@ -26,9 +32,11 @@ runs:
     - name: Initialize Terraform
       uses: dvsa/cvs-github-actions/terraform-initialize@develop
       with:
+        folder-name: ${{ inputs.folder-name }}
         terraform-version: ${{ inputs.terraform-version }}
         environment-name: ${{ inputs.environment-name }}
         create-workspace: 'false'
+        state-account: ${{ inputs.state-account }}
 
     - name: Refresh Terraform
       id: refresh
@@ -38,6 +46,7 @@ runs:
         environment-name: ${{ inputs.environment-name }}
         repository: ${{ inputs.repository }}
         create-workspace: 'false'
+        state-account: ${{ inputs.state-account }}
 
     - name: Remove VPC Connections
       shell: bash   
@@ -45,7 +54,8 @@ runs:
         AWS_PROFILE: main     
       run: |
         # Remove all Lambda VPC Connections
-        for lambda in $(terraform show -no-color | grep -E '\s+arn\s+=\s.*:lambda.*' | sed -E 's/.*"(.*:lambda.*:function:[a-z0-9-]+).*"/\1/' | sort | uniq); do
+        cd ${{ inputs.folder-name }}
+        for lambda in $(terraform show -no-color }${{ inputs.state-account != '' && ' -var-file=environments/$(terraform workspace show).tfvars' || '' }} | grep -E '\s+arn\s+=\s.*:lambda.*' | sed -E 's/.*"(.*:lambda.*:function:[a-z0-9-]+).*"/\1/' | sort | uniq); do
           echo "${{ inputs.dry-run == 'true' && '(dryrun) ' || '' }}remove: ${lambda}"
           ${{ inputs.dry-run == 'true' && 'echo ' || '' }}aws lambda update-function-configuration --function-name ${lambda} --vpc-config '{"SubnetIds":[], "SecurityGroupIds":[]}' >/dev/null
         done
@@ -62,6 +72,8 @@ runs:
         create-workspace: 'false'
         encryption-key: ${{ inputs.encryption-key }}
         infracost-key: ${{ inputs.infracost-key }}
+        folder-name: ${{ inputs.folder-name }}
+        state-account: ${{ fromJson(vars.AWS_ACCOUNTS)[inputs.environment].name }}
 
     - name: Terraform Apply
       id: apply
@@ -72,12 +84,15 @@ runs:
         environment-name: ${{ inputs.environment-name }}
         create-workspace: 'false'
         encryption-key: ${{ inputs.encryption-key }}
+        folder-name: ${{ inputs.folder-name }}
+        state-account: ${{ fromJson(vars.AWS_ACCOUNTS)[inputs.environment].name }}
         
     - name: Remove Workspace
       if: ${{ inputs.dry-run == 'false' && steps.refresh.outcome == 'success' && steps.plan.outputs.outcome == 'success' && steps.apply.outcome == 'success' }}
       shell: bash
       run: |
         # Remove ${{ inputs.environment-name }} Workspace
+        cd ${{ inputs.folder-name }}
         terraform workspace select default
         terraform workspace delete ${{ inputs.environment-name }} 
         echo "Terraform Workspace \`${{ inputs.environment-name }}\` Deleted!" >> $GITHUB_STEP_SUMMARY

@@ -8,6 +8,12 @@ inputs:
   terraform-version:
     description: The version of Terraform to use (defaults to 1.7.3)
     default: 1.7.3
+  folder-name:
+    description: Optional folder name, if not in repository
+    default: '.'
+  state-account:
+    description: Account Name for Core TF Standard
+    required: false
   create-workspace:
     description: Create new Workspace if required
     default: 'true'
@@ -28,7 +34,9 @@ runs:
       run: |
         # Initialize ${{ inputs.environment-name }}
         if [[ ! -f ".terraform/environment" ]]; then
-          terraform init
+          cd ${{ inputs.folder-name }}
+          terraform init -upgrade -reconfigure ${{ inputs.state-account != '' && format('-backend-config="workspace_key_prefix={0}"', inputs.state-account) || '' }}
+
           terraform workspace select ${{ inputs.create-workspace == 'true' && '-or-create' || '' }} ${{ inputs.environment-name }} \
           && $(echo "Workspace: ${{ inputs.environment-name }}" >> $GITHUB_STEP_SUMMARY)
         fi  
