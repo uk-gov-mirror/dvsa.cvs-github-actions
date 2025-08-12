@@ -81,7 +81,7 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_MGMT_ROLE }}
           aws-region: ${{ inputs.aws-region }}
           role-session-name: gha_prepare_${{ steps.package.outputs.service-name }}_${{ steps.environment.outputs.environment-name }}
 
