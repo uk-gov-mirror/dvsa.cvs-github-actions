@@ -49,15 +49,10 @@ permissions:
   contents: write
   id-token: write
 
-concurrency:
-  group: '${{ github.workflow }}-${{ github.ref_name }}'
-  cancel-in-progress: true
-
 jobs:
   environment:
     name: 🧹 Prepare Environment
-    runs-on: 
-      - ubuntu-latest
+    runs-on: ubuntu-latest
     outputs: 
       build-service: ${{ steps.build.outputs.build }}
       service-name: ${{ steps.package.outputs.service-name }}
@@ -120,7 +115,7 @@ jobs:
   build-service:
     name: Build
     needs: environment
-    runs-on: [ubuntu-latest]
+    runs-on: ubuntu-latest
     steps:
       - name: Get Environment Details
         id: environment
