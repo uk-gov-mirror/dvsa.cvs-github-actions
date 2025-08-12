@@ -38,13 +38,6 @@ on:
         description: 'GitHub Token for authentication'
         required: true
 
-  # schedule:
-  #   - cron: '0 6 * * *'
-  # push:
-  #   branches: [main, release/*, feature/*]
-  #   paths: ["**", "!.github/*", "!infrastructure/*"]
-  # workflow_dispatch:
-
 permissions:
   contents: write
   id-token: write
@@ -113,7 +106,7 @@ jobs:
           echo "build=${build}" >> $GITHUB_OUTPUT
 
   build-service:
-    name: Build
+    name: 🚀 Build & Store
     needs: environment
     runs-on: ubuntu-latest
     steps:
