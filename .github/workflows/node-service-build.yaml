@@ -52,7 +52,6 @@ jobs:
           echo "|------------|-------|" >> $GITHUB_STEP_SUMMARY
           echo '${{ toJson(inputs) }}' | jq -r 'to_entries | map("| " + .key + " | " + (.value|tostring) + " |") | .[]' >> $GITHUB_STEP_SUMMARY
 
-
   environment:
     name: 🧹 Prepare Environment
     runs-on: ubuntu-latest
