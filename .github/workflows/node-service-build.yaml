@@ -43,6 +43,16 @@ permissions:
   id-token: write
 
 jobs:
+  summary:
+    name: 📝 Update Summary
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "| Input Name | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo '${{ toJson(inputs) }}' | jq -r 'to_entries | map("| " + .key + " | " + (.value|tostring) + " |") | .[]' >> $GITHUB_STEP_SUMMARY
+
+
   environment:
     name: 🧹 Prepare Environment
     runs-on: ubuntu-latest
