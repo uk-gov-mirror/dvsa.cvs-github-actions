@@ -1,0 +1,153 @@
+name: Build and Store
+on:
+  workflow_call:
+    inputs:
+      branch:
+        description: 'Branch to create or build'
+        required: true
+        type: string
+      artifact-bucket:
+        description: 'S3 bucket for artifacts'
+        required: true
+        type: string
+      aws-region:
+        description: 'AWS region to use'
+        required: false
+        type: string
+        default: 'eu-west-1'
+      dry-run:
+        description: 'Run in dry-run mode'
+        required: false
+        type: boolean
+        default: false
+      ignore-test-failures:
+        description: 'Ignore test failures'
+        required: false
+        type: boolean
+        default: false
+      dynamo_db:
+        description: 'Enable DynamoDB support'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      AWS_MGMT_ROLE:
+        description: 'AWS Management Role ARN to assume'
+        required: true
+      GH_TOKEN:
+        description: 'GitHub Token for authentication'
+        required: true
+
+  # schedule:
+  #   - cron: '0 6 * * *'
+  # push:
+  #   branches: [main, release/*, feature/*]
+  #   paths: ["**", "!.github/*", "!infrastructure/*"]
+  # workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: '${{ github.workflow }}-${{ github.ref_name }}'
+  cancel-in-progress: true
+
+jobs:
+  environment:
+    name: 🧹 Prepare Environment
+    runs-on: 
+      - ubuntu-latest
+    outputs: 
+      build-service: ${{ steps.build.outputs.build }}
+      service-name: ${{ steps.package.outputs.service-name }}
+      github-branch: ${{ steps.environment.outputs.github-branch }}
+      environment-name: ${{ steps.environment.outputs.environment-name }}
+      environment-type: ${{ steps.environment.outputs.environment-type }}
+      environment-shortname: ${{ steps.environment.outputs.environment-shortname }}
+
+    steps:
+      - name: 📥 Get Codebase
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }} # github.event_name == 'schedule' && 'main' || github.ref_name
+
+      - name: 📦 Read Package
+        id: package
+        run: |
+          package=$(cat package.json | jq -c)
+          echo "service-name=$(jq -rc '.name' <<< ${package})" >> $GITHUB_OUTPUT
+
+      - name: 🌳 Get Environment Details
+        id: environment
+        uses: dvsa/cvs-github-actions/environment@develop
+        with:
+         environment: ${{ github.ref_name }}
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ inputs.aws-region }}
+          role-session-name: gha_prepare_${{ steps.package.outputs.service-name }}_${{ steps.environment.outputs.environment-name }}
+
+      - name: 🔍 Identify Builds
+        id: build
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          # Check for existing Commit Hash for Function
+          repo="${{ github.repository }}"
+          hash_file=${{ format('latestHash_{0}.txt', steps.environment.outputs.environment-name) }}
+          build=false
+          
+          check_for_hash () {
+            printf "➡️ \033[0;34m${{ steps.package.outputs.service-name }}\033[0m = \033[0;32m${{ github.sha }}\033[0m\n"
+            hashes=$(aws s3api list-objects-v2 --bucket ${{ inputs.artifact-bucket }} --query "Contents[?Key.contains(@,'${{ github.sha }}.zip')].Key")            
+            if [[ "${hashes}" == "[]" ]]; then
+              printf "\033[0;31mx \033[0;34mFunction Zip for \033[0m${{ steps.package.outputs.service-name }}\033[0;36m does not exist - adding to build queue\033[0m\n" && build=true
+            else
+              printf "\033[0;32m\xE2\x9C\x94 \033[0;34mFunction Zip for \033[0m${{ steps.package.outputs.service-name }}\033[0;34m already exists - creating Hash File(s)\033[0m\n"
+              # Create Hash File
+              for service in $(jq -r '.[]' <<< ${hashes}); do
+                ${{ inputs.dry-run == 'true' && 'echo [debug] ' || '' }}echo -n "${{ github.sha }}" | aws s3 cp - s3://${{ inputs.artifact-bucket }}/${service%%/*}/$hash_file --content-type "text/plain" 2>&1
+              done  
+            fi
+          }
+          printf "📦 \033[1mPackage List\033[0m\n"
+          check_for_hash
+          echo "build=${build}" >> $GITHUB_OUTPUT
+
+  build-service:
+    name: Build
+    needs: environment
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Get Environment Details
+        id: environment
+        uses: dvsa/cvs-github-actions/environment@develop
+        with:
+          environment: ${{ github.ref_name }}
+
+      - name: 🪪 Get Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_MGMT_ROLE }}
+          aws-region: ${{ inputs.aws-region }}
+          role-session-name: gha_tf_${{ needs.environment.outputs.service-name }}_${{ needs.environment.outputs.environment-name }}
+
+      - name: 🏗️ Build Node Function
+        id: build
+        uses: dvsa/cvs-github-actions/service-build@develop
+        with:
+          access_token: ${{ secrets.GH_TOKEN }}
+          ignore_fail: ${{ inputs.ignore-test-failures }}
+          dynamo_db: ${{ inputs.dynamo_db }}
+
+      - name: 📤 Upload hash zip to S3
+        uses: dvsa/cvs-github-actions/service-store@develop
+        if: ${{ !inputs.dry-run }}
+        with:
+          environment_name: ${{ needs.environment.outputs.environment-name }}
+          access_token: ${{ secrets.GH_TOKEN }}
+          s3_bucket: ${{ inputs.artifact-bucket }}
+          service_name: ${{ needs.environment.outputs.service-name }}
