@@ -1,0 +1,94 @@
+name: 'Terraform PR Comment'
+description: 'Posts Terraform checks comment on a PR'
+inputs:
+  fmt_outcome:
+    required: true
+    description: 'Terraform fmt outcome'
+  # init_outcome:
+  #   required: true
+  #   description: 'Terraform init outcome'
+  # validate_outcome:
+  #   required: true
+  #   description: 'Terraform validate outcome'
+  # validate_stdout:
+  #   required: true
+  #   description: 'Terraform validate stdout'
+  # plan_outcome:
+  #   required: true
+  #   description: 'Terraform plan outcome'
+  # plan_stdout:
+  #   required: true
+  #   description: 'Terraform plan stdout'
+  # scan_outcome:
+  #   required: true
+  #   description: 'Checkov scan outcome'
+  # checkov_output:
+  #   required: true
+  #   description: 'Checkov output'
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          // 1. Retrieve existing bot comments for the PR
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          })
+          const botComment = comments.find(comment => {
+            return comment.user.type === 'Bot' && comment.body.includes('Terraform Format and Style')
+          })
+
+          // 2. Prepare format of the comment
+          const output = `#### Terraform Format and Style 🖌\`${{ inputs.fmt_outcome }}\`
+          #### Terraform Initialization ⚙️\`${{ inputs.init_outcome }}\`
+          #### Terraform Validation 🤖\`${{ inputs.validate_outcome }}\`
+          <details><summary>Validation Output</summary>
+
+          \`\`\`\n
+          ${{ inputs.validate_stdout }}
+          \`\`\`
+
+          </details>
+
+          #### Terraform Plan 📖\`${{ inputs.plan_outcome }}\`
+
+          <details><summary>Terraform Plan</summary>
+
+          ### Terraform Plan
+
+          \`\`\`\n
+          ${{ inputs.plan_stdout }}
+          \`\`\`
+
+          </details>
+
+          #### Checkov Scan 📖\`${{ inputs.scan_outcome }}\`
+
+          <details><summary>Checkov scan output</summary>
+
+          ${{ inputs.checkov_output }}
+
+          </details>
+
+          *Pusher: @${{ github.actor }}, Workflow: \`${{ github.workflow }}\`*`;
+
+          // 3. If we have a comment, update it, otherwise create a new one
+          if (botComment) {
+            github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body: output
+            })
+          } else {
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+          }

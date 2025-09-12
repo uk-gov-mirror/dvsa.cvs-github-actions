@@ -18,6 +18,11 @@ inputs:
     description: Optional folder name, if not in repository
     default: '.'
 
+outputs:
+  fmt_outcome:
+    description: "Outcome of terraform fmt"
+    value: ${{ steps.fmt.outputs.outcome }}
+
 runs:
   using: composite
   steps:
@@ -32,12 +37,14 @@ runs:
         state-account: ${{ inputs.state-account }}
     
     - name: Terraform format
+      id: fmt
       continue-on-error: true
       shell: bash
       run: |
         # Format Terraform
         cd ${{ inputs.folder-name }}
         terraform fmt -check=true -diff=true || true
+        echo "outcome=$?" >> $GITHUB_OUTPUT
       
     - name: Chekov Scan
       continue-on-error: true
