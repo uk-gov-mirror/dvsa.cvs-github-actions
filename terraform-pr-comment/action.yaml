@@ -37,8 +37,9 @@ runs:
           echo "fmt_result=success" >> $GITHUB_OUTPUT
         else
           echo "fmt_result=failure" >> $GITHUB_OUTPUT
-        fi
-
+        fi      
+        echo ${{ inputs.validate-exitcode }}
+        echo "test"
         if [ "${{ inputs.validate-exitcode }}" -eq 0 ]; then
           echo "validate_result=success" >> $GITHUB_OUTPUT
         else

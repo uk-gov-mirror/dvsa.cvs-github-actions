@@ -60,7 +60,6 @@ runs:
       if: ${{ inputs.validate == 'true' }}
       run: |
         terraform validate -no-color
-        echo $?
         echo "exitcode=$?" >> $GITHUB_OUTPUT
         echo 'Terraform Validated ✅' >> $GITHUB_STEP_SUMMARY
 
