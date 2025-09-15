@@ -44,6 +44,7 @@ runs:
         # Format Terraform
         cd ${{ inputs.folder-name }}
         terraform fmt -check=true -diff=true
+        echo $?
         echo "outcome=$( [ $? -eq 0 ] && echo success || echo failure )" >> $GITHUB_OUTPUT
       
     - name: Chekov Scan
