@@ -43,9 +43,9 @@ runs:
       run: |
         # Format Terraform
         cd ${{ inputs.folder-name }}
-        terraform fmt -check=true -diff=true || true
-        echo $?
+        terraform fmt -check=true -diff=true
         exit_code=$?
+        echo exit_code 
         if [ $exit_code -eq 0 ]; then
           echo "outcome=success" >> $GITHUB_OUTPUT
         else
