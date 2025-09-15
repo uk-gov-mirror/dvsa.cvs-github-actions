@@ -35,12 +35,12 @@ inputs:
     description: API Key for InfraCost
 
 outputs:
-  init_outcome:
-    description: "Outcome of terraform initialize"
-    value: ${{ steps.init.outcome }}
   changes-detected:
     description: Terraform has detected changes
     value: ${{ steps.plan.outputs.changes-detected }}
+  validate-exitcode:
+    description: Outcome of terraform validate
+    value: ${{ steps.validate.outputs.validate-exitcode }}
 
 runs:
   using: composite
@@ -60,6 +60,7 @@ runs:
       if: ${{ inputs.validate == 'true' }}
       run: |
         terraform validate -no-color
+        echo "validate-exitcode=$?" >> $GITHUB_OUTPUT
         echo 'Terraform Validated ✅' >> $GITHUB_STEP_SUMMARY
 
     - name: 🛠️ Terraform Plan

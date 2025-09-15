@@ -19,7 +19,7 @@ inputs:
     default: '.'
 
 outputs:
-  fmt_exitcode:
+  fmt-exitcode:
     description: "Exit code of terraform format"
     value: ${{ steps.fmt.outputs.exitcode }}
 

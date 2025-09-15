@@ -4,42 +4,45 @@ inputs:
   github-token:
     required: true
     description: 'GitHub token for authentication'
-  fmt_exitcode:
+  fmt-exitcode:
     required: true
     description: 'Terraform format exit code'
-  init_outcome:
+  validate-outcome:
     required: true
-    description: 'Terraform init outcome'
-  # validate_outcome:
-  #   required: true
-  #   description: 'Terraform validate outcome'
-  # validate_stdout:
-  #   required: true
-  #   description: 'Terraform validate stdout'
-  # plan_outcome:
+    description: 'Terraform validate outcome'
+  validate-stdout:
+    required: true
+    description: 'Terraform validate stdout'
+  # plan-outcome:
   #   required: true
   #   description: 'Terraform plan outcome'
-  # plan_stdout:
+  # plan-stdout:
   #   required: true
   #   description: 'Terraform plan stdout'
-  # scan_outcome:
+  # scan-outcome:
   #   required: true
   #   description: 'Checkov scan outcome'
-  # checkov_output:
+  # checkov-output:
   #   required: true
   #   description: 'Checkov output'
 runs:
   using: "composite"
   steps:
 
-    - name: Parse fmt exit code
-      id: parse_fmt
+    - name: Parse exit codes
+      id: parse_exitcode
       shell: bash
       run: |
-        if [ "${{ inputs.fmt_exitcode }}" -eq 0 ]; then
-          echo "result=success" >> $GITHUB_OUTPUT
+        if [ "${{ inputs.fmt-exitcode }}" -eq 0 ]; then
+          echo "fmt_result=success" >> $GITHUB_OUTPUT
         else
-          echo "result=failure" >> $GITHUB_OUTPUT
+          echo "fmt_result=failure" >> $GITHUB_OUTPUT
+        fi
+
+        if [ "${{ inputs.validate-exitcode }}" -eq 0 ]; then
+          echo "validate_result=success" >> $GITHUB_OUTPUT
+        else
+          echo "validate_result=failure" >> $GITHUB_OUTPUT
         fi
 
     - uses: actions/github-script@v6
@@ -57,9 +60,8 @@ runs:
           })
 
           // 2. Prepare format of the comment
-          const output = `#### Terraform Format and Style 🖌\`${{ steps.parse_fmt.outputs.result }}\`
-          #### Terraform Initialization ⚙️\`${{ inputs.init_outcome }}\`
-          #### Terraform Validation 🤖\`${{ inputs.validate_outcome }}\`
+          const output = `#### Terraform Format and Style 🖌\`${{ steps.parse_exitcode.outputs.fmt_result }}\`
+          #### Terraform Validation 🤖\`${{ steps.parse_exitcode.outputs.validate_result }}\`
           <details><summary>Validation Output</summary>
 
           \`\`\`\n
