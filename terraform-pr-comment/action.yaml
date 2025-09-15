@@ -36,7 +36,7 @@ runs:
       id: parse_fmt
       shell: bash
       run: |
-        if [ "${{ inputs.fmt_exitcode }}" -eq 0 ]; then
+        if [ "${{ inputs.fmt_exitcode }}" -eq 3 ]; then
           echo "result=success" >> $GITHUB_OUTPUT
         else
           echo "result=failure" >> $GITHUB_OUTPUT
