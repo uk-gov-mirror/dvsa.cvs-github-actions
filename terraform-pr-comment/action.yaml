@@ -7,9 +7,9 @@ inputs:
   fmt-exitcode:
     required: true
     description: 'Terraform format exit code'
-  validate-outcome:
+  validate-exitcode:
     required: true
-    description: 'Terraform validate outcome'
+    description: 'Terraform validate exit code'
   validate-stdout:
     required: true
     description: 'Terraform validate stdout'
