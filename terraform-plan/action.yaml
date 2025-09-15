@@ -35,6 +35,9 @@ inputs:
     description: API Key for InfraCost
 
 outputs:
+  init_outcome:
+    description: "Outcome of terraform initialize"
+    value: ${{ steps.init.outcome }}
   changes-detected:
     description: Terraform has detected changes
     value: ${{ steps.plan.outputs.changes-detected }}
@@ -43,6 +46,7 @@ runs:
   using: composite
   steps:
     - name: Initialize Terraform
+      id: init
       uses: dvsa/cvs-github-actions/terraform-initialize@develop
       with:
         folder-name: ${{ inputs.folder-name }}

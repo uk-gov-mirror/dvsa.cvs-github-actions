@@ -6,10 +6,10 @@ inputs:
     description: 'GitHub token for authentication'
   fmt_exitcode:
     required: true
-    description: 'Terraform fmt outcome'
-  # init_outcome:
-  #   required: true
-  #   description: 'Terraform init outcome'
+    description: 'Terraform format exit code'
+  init_outcome:
+    required: true
+    description: 'Terraform init outcome'
   # validate_outcome:
   #   required: true
   #   description: 'Terraform validate outcome'
@@ -36,7 +36,7 @@ runs:
       id: parse_fmt
       shell: bash
       run: |
-        if [ "${{ inputs.fmt_exitcode }}" -eq 3 ]; then
+        if [ "${{ inputs.fmt_exitcode }}" -eq 0 ]; then
           echo "result=success" >> $GITHUB_OUTPUT
         else
           echo "result=failure" >> $GITHUB_OUTPUT
