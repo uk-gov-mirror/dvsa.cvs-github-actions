@@ -42,6 +42,7 @@ runs:
       shell: bash
       run: |
         # Format Terraform
+        set +e
         cd ${{ inputs.folder-name }}
         terraform fmt -check=true -diff=true
         exit_code=$?
