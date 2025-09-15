@@ -4,7 +4,7 @@ inputs:
   github-token:
     required: true
     description: 'GitHub token for authentication'
-  fmt_outcome:
+  fmt_exitcode:
     required: true
     description: 'Terraform fmt outcome'
   # init_outcome:
@@ -31,6 +31,17 @@ inputs:
 runs:
   using: "composite"
   steps:
+
+    - name: Parse fmt exit code
+      id: parse_fmt
+      shell: bash
+      run: |
+        if [ "${{ inputs.fmt_exitcode }}" -eq 0 ]; then
+          echo "result=success" >> $GITHUB_OUTPUT
+        else
+          echo "result=failure" >> $GITHUB_OUTPUT
+        fi
+
     - uses: actions/github-script@v6
       with:
         github-token: ${{ inputs.github-token }}
@@ -46,7 +57,7 @@ runs:
           })
 
           // 2. Prepare format of the comment
-          const output = `#### Terraform Format and Style 🖌\`${{ inputs.fmt_outcome }}\`
+          const output = `#### Terraform Format and Style 🖌\`${{ steps.parse_fmt.outputs.result }}\`
           #### Terraform Initialization ⚙️\`${{ inputs.init_outcome }}\`
           #### Terraform Validation 🤖\`${{ inputs.validate_outcome }}\`
           <details><summary>Validation Output</summary>
