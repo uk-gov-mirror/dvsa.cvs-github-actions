@@ -45,9 +45,7 @@ runs:
         set +e
         cd ${{ inputs.folder-name }}
         terraform fmt -check=true -diff=true
-        exit_code=$?
-        echo exit_code 
-        if [ $exit_code -eq 3 ]; then
+        if [ $? -eq 0 ]; then
           echo "outcome=success" >> $GITHUB_OUTPUT
         else
           echo "outcome=failure" >> $GITHUB_OUTPUT
