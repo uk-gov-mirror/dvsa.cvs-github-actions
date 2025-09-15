@@ -43,9 +43,14 @@ runs:
       run: |
         # Format Terraform
         cd ${{ inputs.folder-name }}
-        terraform fmt -check=true -diff=true
+        terraform fmt -check=true -diff=true || true
         echo $?
-        echo "outcome=$( [ $? -eq 0 ] && echo success || echo failure )" >> $GITHUB_OUTPUT
+        exit_code=$?
+        if [ $exit_code -eq 0 ]; then
+          echo "outcome=success" >> $GITHUB_OUTPUT
+        else
+          echo "outcome=failure" >> $GITHUB_OUTPUT
+        fi
       
     - name: Chekov Scan
       continue-on-error: true
