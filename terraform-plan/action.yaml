@@ -40,7 +40,7 @@ outputs:
     value: ${{ steps.plan.outputs.changes-detected }}
   validate-exitcode:
     description: Outcome of terraform validate
-    value: ${{ steps.validate.outputs.validate-exitcode }}
+    value: ${{ steps.validate.outputs.exitcode }}
 
 runs:
   using: composite
@@ -60,7 +60,8 @@ runs:
       if: ${{ inputs.validate == 'true' }}
       run: |
         terraform validate -no-color
-        echo "validate-exitcode=$?" >> $GITHUB_OUTPUT
+        echo $?
+        echo "exitcode=$?" >> $GITHUB_OUTPUT
         echo 'Terraform Validated ✅' >> $GITHUB_STEP_SUMMARY
 
     - name: 🛠️ Terraform Plan
