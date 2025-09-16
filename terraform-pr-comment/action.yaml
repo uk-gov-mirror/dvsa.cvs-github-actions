@@ -55,10 +55,7 @@ runs:
       id: checkov_report
       shell: bash
       run: |
-        CHECKOV_OUTPUT=$(cat checkov-report-${{ github.run_id }}.md)
-        echo "checkov_output<<EOF" >> $GITHUB_OUTPUT
-        echo "$CHECKOV_OUTPUT" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+         ls -l checkov-report-${{ github.run_id }}.md
 
     - uses: actions/github-script@v6
       with:
