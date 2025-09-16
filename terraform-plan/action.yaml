@@ -41,6 +41,9 @@ outputs:
   validate-exitcode:
     description: Outcome of terraform validate
     value: ${{ steps.validate.outputs.exitcode }}
+  plan-exitcode:
+    description: Outcome of terraform plan
+    value: ${{ steps.plan.outputs.exitcode }}
 
 runs:
   using: composite
@@ -71,6 +74,7 @@ runs:
         # Create Terraform Plan File
         cd ${{ inputs.folder-name }}
         terraform plan ${{ inputs.options }}${{ inputs.state-account != '' && ' -var-file=environments/$(terraform workspace show).tfvars' || '' }} -out terraform.tfplan
+        echo "exitcode=$?" >> $GITHUB_OUTPUT
         terraform show terraform.tfplan -no-color > plan.txt
         echo 'Plan Completed ✅' >> $GITHUB_STEP_SUMMARY
         plan_detail=$(terraform show -no-color terraform.tfplan | grep -E 'Plan:|Your infrastructure' || echo "No environment currently deployed")

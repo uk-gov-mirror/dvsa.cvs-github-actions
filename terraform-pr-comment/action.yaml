@@ -10,12 +10,9 @@ inputs:
   validate-exitcode:
     required: true
     description: 'Terraform validate exit code'
-  validate-stdout:
+  plan-exitcode:
     required: true
-    description: 'Terraform validate stdout'
-  # plan-outcome:
-  #   required: true
-  #   description: 'Terraform plan outcome'
+    description: 'Terraform plan exit code'
   # plan-stdout:
   #   required: true
   #   description: 'Terraform plan stdout'
@@ -38,12 +35,15 @@ runs:
         else
           echo "fmt_result=failure" >> $GITHUB_OUTPUT
         fi      
-        echo ${{ inputs.validate-exitcode }}
-        echo "test"
         if [ "${{ inputs.validate-exitcode }}" -eq 0 ]; then
           echo "validate_result=success" >> $GITHUB_OUTPUT
         else
           echo "validate_result=failure" >> $GITHUB_OUTPUT
+        fi
+        if [ "${{ inputs.plan-exitcode }}" -eq 0 ]; then
+          echo "plan_result=success" >> $GITHUB_OUTPUT
+        else
+          echo "plan_result=failure" >> $GITHUB_OUTPUT
         fi
 
     - uses: actions/github-script@v6
@@ -71,7 +71,7 @@ runs:
 
           </details>
 
-          #### Terraform Plan 📖\`${{ inputs.plan_outcome }}\`
+          #### Terraform Plan 📖\`${{ steps.parse_exitcode.outputs.plan_result }}\`
 
           <details><summary>Terraform Plan</summary>
 
