@@ -45,11 +45,20 @@ runs:
         else
           echo "plan_result=failure" >> $GITHUB_OUTPUT
         fi
-        if [ "${{ inputs.checkov-exitcode }}" -eq 1 ]; then
+        if [ "${{ inputs.checkov-exitcode }}" -eq 0 ]; then
           echo "checkov_result=success" >> $GITHUB_OUTPUT
         else
           echo "checkov_result=failure" >> $GITHUB_OUTPUT
         fi
+
+    - name: Read Checkov Report
+      id: checkov_report
+      shell: bash
+      run: |
+        CHECKOV_OUTPUT=$(cat checkov-report-${{ github.run_id }}.md)
+        echo "checkov_output<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHECKOV_OUTPUT" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
 
     - uses: actions/github-script@v6
       with:
@@ -64,6 +73,14 @@ runs:
           const botComment = comments.find(comment => {
             return comment.user.type === 'Bot' && comment.body.includes('Terraform Format and Style')
           })
+
+          const fs = require('fs');
+          let checkovOutput = '';
+          try {
+            checkovOutput = fs.readFileSync('checkov-report-${{ github.run_id }}.md', 'utf8');
+          } catch (e) {
+            checkovOutput = 'Checkov report not found.';
+          }
 
           // 2. Prepare format of the comment
           const output = `#### Terraform Format and Style 🖌\`${{ steps.parse_exitcode.outputs.fmt_result }}\`
@@ -93,7 +110,7 @@ runs:
 
           <details><summary>Checkov scan output</summary>
 
-          ${{ inputs.checkov_output }}
+          ${checkovOutput}
 
           </details>
 
