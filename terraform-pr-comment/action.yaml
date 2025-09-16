@@ -16,9 +16,9 @@ inputs:
   # plan-stdout:
   #   required: true
   #   description: 'Terraform plan stdout'
-  # scan-outcome:
-  #   required: true
-  #   description: 'Checkov scan outcome'
+  checkov_exitcode:
+    required: true
+    description: 'Checkov scan exit code'
   # checkov-output:
   #   required: true
   #   description: 'Checkov output'
@@ -45,6 +45,11 @@ runs:
         else
           echo "plan_result=failure" >> $GITHUB_OUTPUT
         fi
+        if [ "${{ inputs.checkov_exitcode }}" -eq 0 ]; then
+          echo "checkov_result=success" >> $GITHUB_OUTPUT
+        else
+          echo "checkov_result=failure" >> $GITHUB_OUTPUT
+        fi
 
     - uses: actions/github-script@v6
       with:
@@ -62,6 +67,7 @@ runs:
 
           // 2. Prepare format of the comment
           const output = `#### Terraform Format and Style 🖌\`${{ steps.parse_exitcode.outputs.fmt_result }}\`
+          #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
           #### Terraform Validation 🤖\`${{ steps.parse_exitcode.outputs.validate_result }}\`
           <details><summary>Validation Output</summary>
 
@@ -83,7 +89,7 @@ runs:
 
           </details>
 
-          #### Checkov Scan 📖\`${{ inputs.scan_outcome }}\`
+          #### Checkov Scan 📖\`${{ steps.parse_exitcode.outputs.checkov_result }}\`
 
           <details><summary>Checkov scan output</summary>
 
