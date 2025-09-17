@@ -78,6 +78,12 @@ runs:
           } catch (e) {
             checkovOutput = 'Checkov report not found.';
           }
+          let planOutput = '';
+          try {
+            planOutput = fs.readFileSync('plan.txt', 'utf8');
+          } catch (e) {
+            planOutput = 'Terraform plan not found.';
+          }
 
           // 2. Prepare format of the comment
           const output = `#### Terraform Format and Style 🖌\`${{ steps.parse_exitcode.outputs.fmt_result }}\`
