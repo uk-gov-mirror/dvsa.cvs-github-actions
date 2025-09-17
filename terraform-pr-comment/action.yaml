@@ -74,7 +74,7 @@ runs:
           const fs = require('fs');
           let checkovOutput = '';
           try {
-            checkovOutput = fs.readFileSync('checkov-report-${{ github.run_id }}.md/results_github_failed_only', 'utf8');
+            checkovOutput = fs.readFileSync('checkov-report-${{ github.run_id }}.md/results_github_failed_only.md', 'utf8');
           } catch (e) {
             checkovOutput = 'Checkov report not found.';
           }
