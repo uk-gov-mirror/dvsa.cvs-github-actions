@@ -78,7 +78,7 @@ runs:
 
           // 2. Prepare format of the comment
           const output = `#### Terraform Format and Style 🖌\`${{ steps.parse_exitcode.outputs.fmt_result }}\`
-          #### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+          #### Terraform Format and Style 🖌\`${{ inputs.fmt.outcome }}\`
           #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
           #### Terraform Validation 🤖\`${{ steps.parse_exitcode.outputs.validate_result }}\`
           <details><summary>Validation Output</summary>
