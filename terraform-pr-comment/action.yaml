@@ -51,11 +51,6 @@ runs:
           echo "checkov_result=failure" >> $GITHUB_OUTPUT
         fi
     
-    - name: Download Checkov Report
-      uses: actions/download-artifact@v4
-      with:
-        name: checkov-report-${{ github.run_id }}
-    
     - name: Read Checkov Report
       id: checkov_report
       shell: bash
@@ -79,7 +74,7 @@ runs:
           const fs = require('fs');
           let checkovOutput = '';
           try {
-            checkovOutput = fs.readFileSync('checkov-report-${{ github.run_id }}.md', 'utf8');
+            checkovOutput = fs.readFileSync('checkov-report-${{ github.run_id }}.md/results_github_failed_only', 'utf8');
           } catch (e) {
             checkovOutput = 'Checkov report not found.';
           }
