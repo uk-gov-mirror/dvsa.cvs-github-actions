@@ -50,12 +50,17 @@ runs:
         else
           echo "checkov_result=failure" >> $GITHUB_OUTPUT
         fi
-
+    
+    - name: Download Checkov Report
+      uses: actions/download-artifact@v4
+      with:
+        name: checkov-report-${{ github.run_id }}
+    
     - name: Read Checkov Report
       id: checkov_report
       shell: bash
       run: |
-         ls -l checkov-report-${{ github.run_id }}.md
+         ls -l checkov-report-${{ github.run_id }}
 
     - uses: actions/github-script@v6
       with:
