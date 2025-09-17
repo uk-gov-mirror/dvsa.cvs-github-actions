@@ -60,7 +60,7 @@ runs:
       id: checkov_report
       shell: bash
       run: |
-         ls -l checkov-report-${{ github.run_id }}
+         ls -l
 
     - uses: actions/github-script@v6
       with:
