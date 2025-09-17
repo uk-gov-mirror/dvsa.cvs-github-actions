@@ -22,6 +22,9 @@ outputs:
   fmt-exitcode:
     description: "Exit code of terraform format"
     value: ${{ steps.fmt.outputs.exitcode }}
+  fmt-outcome:
+    description: "Outcome of terraform format"
+    value: ${{ steps.fmt.outcome }}
   checkov-exitcode:
     description: "Exit code of checkov scan"
     value: ${{ steps.checkov.outputs.exitcode }}
@@ -45,19 +48,20 @@ runs:
       shell: bash
       run: |
         # Format Terraform
-        set +e
+        # set +e
         cd ${{ inputs.folder-name }}
         terraform fmt -check=true -diff=true
-        echo "exitcode=$?" >> $GITHUB_OUTPUT
+        # echo "exitcode=$?" >> $GITHUB_OUTPUT
 
     - name: Checkov Scan
       id: checkov
       continue-on-error: true
+      shell: bash
       run: |
+        # Run Checkov Scan
         set +e
         checkov -d . --skip-framework github_actions -o github_failed_only  --output-file-path checkov-report-${{ github.run_id }}.md
         echo "exitcode=$?" >> $GITHUB_OUTPUT
-      shell: bash
 
     - name: 📝 Upload Report
       uses: actions/upload-artifact@v4
