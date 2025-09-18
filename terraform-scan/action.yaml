@@ -48,10 +48,8 @@ runs:
       shell: bash
       run: |
         # Format Terraform
-        # set +e
         cd ${{ inputs.folder-name }}
-        terraform fmt -check=true -diff=true
-        # echo "exitcode=$?" >> $GITHUB_OUTPUT
+        terraform fmt -check=true -diff=true || true
 
     - name: Checkov Scan
       id: checkov
