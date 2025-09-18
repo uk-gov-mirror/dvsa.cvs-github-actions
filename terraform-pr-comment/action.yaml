@@ -22,6 +22,9 @@ inputs:
   plan-exitcode:
     required: true
     description: 'Terraform plan exit code'
+  plan-outcome:
+    required: true
+    description: 'Terraform plan outcome'
   checkov-exitcode:
     required: true
     description: 'Checkov scan exit code'
@@ -97,7 +100,7 @@ runs:
 
           </details>
 
-          #### Terraform Plan 📖\`${{ steps.parse_exitcode.outputs.plan_result }}\`
+          #### Terraform Plan 📖\`${{ inputs.plan-outcome }}\`
 
           <details><summary>Terraform Plan</summary>
 
