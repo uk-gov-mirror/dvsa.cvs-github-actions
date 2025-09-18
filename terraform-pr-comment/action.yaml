@@ -4,12 +4,12 @@ inputs:
   github-token:
     required: true
     description: 'GitHub token for authentication'
-  fmt-outcome:
-    required: true
-    description: 'Terraform format outcome'
   init-outcome:
     required: true
     description: 'Terraform init outcome'
+  fmt-outcome:
+    required: true
+    description: 'Terraform format outcome'
   validate-outcome:
     required: true
     description: 'Terraform validate outcome'
@@ -64,7 +64,8 @@ runs:
           }
 
           // 2. Prepare format of the comment
-          const output = `#### Terraform Format and Style 🖌\`${{ inputs.fmt-outcome }}\`
+          const output = `#### Terraform Initialization ⚙️\`${{ inputs.init-outcome }}\`
+          #### Terraform Format and Style 🖌\`${{ inputs.fmt-outcome }}\`
 
           <details><summary>Format Output</summary>
           
@@ -74,7 +75,6 @@ runs:
 
           </details>
 
-          #### Terraform Initialization ⚙️\`${{ inputs.init-outcome }}\`
           #### Terraform Validation 🤖\`${{ inputs.validate-outcome }}\`
           <details><summary>Validation Output</summary>
 

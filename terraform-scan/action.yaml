@@ -50,7 +50,7 @@ runs:
       run: |
         # Format Terraform
         cd ${{ inputs.folder-name }}
-        terraform fmt -check=true -diff=true > fmt.txt
+        terraform fmt -check=true -diff=true | tee fmt.txt
 
     - name: Checkov Scan
       id: checkov
