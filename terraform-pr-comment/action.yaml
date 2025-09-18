@@ -13,6 +13,9 @@ inputs:
   validate-exitcode:
     required: true
     description: 'Terraform validate exit code'
+  validate-outcome:
+    required: true
+    description: 'Terraform validate outcome'
   plan-exitcode:
     required: true
     description: 'Terraform plan exit code'
@@ -82,7 +85,7 @@ runs:
           // 2. Prepare format of the comment
           const output = `#### Terraform Format and Style 🖌\`${{ inputs.fmt-outcome }}\`
           #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-          #### Terraform Validation 🤖\`${{ steps.parse_exitcode.outputs.validate_result }}\`
+          #### Terraform Validation 🤖\`${{ inputs.validate-outcome }}\`
           <details><summary>Validation Output</summary>
 
           \`\`\`\n
