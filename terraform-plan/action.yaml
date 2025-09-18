@@ -66,6 +66,7 @@ runs:
         echo 'Terraform Validated ✅' >> $GITHUB_STEP_SUMMARY
 
     - name: 🛠️ Terraform Plan
+      continue-on-error: true
       id: plan
       shell: bash
       run: |
@@ -85,7 +86,6 @@ runs:
         fi 
 
     - name: 🛠️ Show plan in file
-      continue-on-error: true
       shell: bash
       run: |
         # Send readable plan to file
