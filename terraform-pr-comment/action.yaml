@@ -38,6 +38,12 @@ runs:
           })
 
           const fs = require('fs');
+          let fmtOutput = '';
+          try {
+            fmtOutput = fs.readFileSync('fmt.txt', 'utf8');
+          } catch (e) {
+            fmtOutput = 'Terraform fmt not found.';
+          }
           let checkovOutput = '';
           try {
             checkovOutput = fs.readFileSync('checkov-report-${{ github.run_id }}.md/results_github_failed_only.md', 'utf8');
@@ -59,6 +65,15 @@ runs:
 
           // 2. Prepare format of the comment
           const output = `#### Terraform Format and Style 🖌\`${{ inputs.fmt-outcome }}\`
+
+          <details><summary>Format Output</summary>
+          
+          \`\`\`\n
+          ${fmtOutput}
+          \`\`\`
+
+          </details>
+
           #### Terraform Initialization ⚙️\`${{ inputs.init-outcome }}\`
           #### Terraform Validation 🤖\`${{ inputs.validate-outcome }}\`
           <details><summary>Validation Output</summary>
