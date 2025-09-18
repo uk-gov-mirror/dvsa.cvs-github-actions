@@ -66,14 +66,13 @@ runs:
         echo 'Terraform Validated ✅' >> $GITHUB_STEP_SUMMARY
 
     - name: 🛠️ Terraform Plan
-      continue-on-error: true
       id: plan
       shell: bash
       run: |
         # Create Terraform Plan File
         cd ${{ inputs.folder-name }}
         terraform plan ${{ inputs.options }}${{ inputs.state-account != '' && ' -var-file=environments/$(terraform workspace show).tfvars' || '' }} -out terraform.tfplan
-        # terraform show terraform.tfplan -no-color > plan.txt
+        terraform show terraform.tfplan -no-color > plan.txt
         echo 'Plan Completed ✅' >> $GITHUB_STEP_SUMMARY
         plan_detail=$(terraform show -no-color terraform.tfplan | grep -E 'Plan:|Your infrastructure' || echo "No environment currently deployed")
         echo "${plan_detail}" >> $GITHUB_STEP_SUMMARY
@@ -84,12 +83,6 @@ runs:
         else
           echo "changes-detected=false" >> $GITHUB_OUTPUT
         fi 
-
-    - name: 🛠️ Show plan in file
-      shell: bash
-      run: |
-        # Send readable plan to file
-        terraform show -no-color terraform.tfplan > plan.txt
 
     - name: Encrypt Plan File
       uses: dvsa/cvs-github-actions/aws-encrypt@develop
