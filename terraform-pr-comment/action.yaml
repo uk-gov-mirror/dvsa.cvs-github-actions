@@ -4,61 +4,24 @@ inputs:
   github-token:
     required: true
     description: 'GitHub token for authentication'
-  fmt-exitcode:
-    required: true
-    description: 'Terraform format exit code'
   fmt-outcome:
     required: true
     description: 'Terraform format outcome'
   init-outcome:
     required: true
     description: 'Terraform init outcome'
-  validate-exitcode:
-    required: true
-    description: 'Terraform validate exit code'
   validate-outcome:
     required: true
     description: 'Terraform validate outcome'
-  plan-exitcode:
-    required: true
-    description: 'Terraform plan exit code'
   plan-outcome:
     required: true
     description: 'Terraform plan outcome'
-  checkov-exitcode:
-    required: true
-    description: 'Checkov scan exit code'
   checkov-outcome:
     required: true
     description: 'Checkov scan outcome'
 runs:
   using: "composite"
   steps:
-
-    - name: Parse exit codes
-      id: parse_exitcode
-      shell: bash
-      run: |
-        if [ "${{ inputs.fmt-exitcode }}" -eq 0 ]; then
-          echo "fmt_result=success" >> $GITHUB_OUTPUT
-        else
-          echo "fmt_result=failure" >> $GITHUB_OUTPUT
-        fi      
-        if [ "${{ inputs.validate-exitcode }}" -eq 0 ]; then
-          echo "validate_result=success" >> $GITHUB_OUTPUT
-        else
-          echo "validate_result=failure" >> $GITHUB_OUTPUT
-        fi
-        if [ "${{ inputs.plan-exitcode }}" -eq 0 ]; then
-          echo "plan_result=success" >> $GITHUB_OUTPUT
-        else
-          echo "plan_result=failure" >> $GITHUB_OUTPUT
-        fi
-        if [ "${{ inputs.checkov-exitcode }}" -eq 0 ]; then
-          echo "checkov_result=success" >> $GITHUB_OUTPUT
-        else
-          echo "checkov_result=failure" >> $GITHUB_OUTPUT
-        fi
 
     - uses: actions/github-script@v6
       with:

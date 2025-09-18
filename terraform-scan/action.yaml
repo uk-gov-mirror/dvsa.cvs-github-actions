@@ -19,18 +19,12 @@ inputs:
     default: '.'
 
 outputs:
-  fmt-exitcode:
-    description: "Exit code of terraform format"
-    value: ${{ steps.fmt.outputs.exitcode }}
   init-outcome:
     description: Outcome of terraform init
     value: ${{ steps.init.outcome }}
   fmt-outcome:
     description: "Outcome of terraform format"
     value: ${{ steps.fmt.outcome }}
-  checkov-exitcode:
-    description: "Exit code of checkov scan"
-    value: ${{ steps.checkov.outputs.exitcode }}
   checkov-outcome:
     description: "Outcome of checkov scan"
     value: ${{ steps.checkov.outcome }}

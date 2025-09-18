@@ -38,18 +38,9 @@ outputs:
   changes-detected:
     description: Terraform has detected changes
     value: ${{ steps.plan.outputs.changes-detected }}
-  init-outcome:
-    description: Outcome of terraform init
-    value: ${{ steps.init.outcome }}
-  validate-exitcode:
-    description: Outcome of terraform validate
-    value: ${{ steps.validate.outputs.exitcode }}
   validate-outcome:
     description: Outcome of terraform validate
     value: ${{ steps.validate.outcome }}
-  plan-exitcode:
-    description: Outcome of terraform plan
-    value: ${{ steps.plan.outputs.exitcode }}
   plan-outcome:
     description: Outcome of terraform plan
     value: ${{ steps.plan.outcome }}
@@ -71,8 +62,7 @@ runs:
       shell: bash
       if: ${{ inputs.validate == 'true' }}
       run: |
-        terraform validate -no-color
-        echo "exitcode=$?" >> $GITHUB_OUTPUT
+        terraform validate -no-color > validate.txt
         echo 'Terraform Validated ✅' >> $GITHUB_STEP_SUMMARY
 
     - name: 🛠️ Terraform Plan
@@ -81,9 +71,12 @@ runs:
       run: |
         # Create Terraform Plan File
         cd ${{ inputs.folder-name }}
-        terraform plan ${{ inputs.options }}${{ inputs.state-account != '' && ' -var-file=environments/$(terraform workspace show).tfvars' || '' }} -out terraform.tfplan
-        # echo "exitcode=$?" >> $GITHUB_OUTPUT
+        terraform plan ${{ inputs.options }}${{ inputs.state-account != '' && ' -var-file=environments/$(terraform workspace show).tfvars' || '' }} -out terraform.tfplan || true
+        plan_exitcode=$?
         terraform show terraform.tfplan -no-color > plan.txt
+        if [[ $plan_exitcode -ne 0 ]]; then
+          exit $plan_exitcode
+        fi
         echo 'Plan Completed ✅' >> $GITHUB_STEP_SUMMARY
         plan_detail=$(terraform show -no-color terraform.tfplan | grep -E 'Plan:|Your infrastructure' || echo "No environment currently deployed")
         echo "${plan_detail}" >> $GITHUB_STEP_SUMMARY
