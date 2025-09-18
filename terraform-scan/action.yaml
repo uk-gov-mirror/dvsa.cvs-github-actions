@@ -49,7 +49,7 @@ runs:
       run: |
         # Format Terraform
         cd ${{ inputs.folder-name }}
-        terraform fmt -check=true -diff=true || true
+        terraform fmt -check=true -diff=true
 
     - name: Checkov Scan
       id: checkov
