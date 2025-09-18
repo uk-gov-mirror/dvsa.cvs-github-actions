@@ -28,6 +28,9 @@ outputs:
   checkov-exitcode:
     description: "Exit code of checkov scan"
     value: ${{ steps.checkov.outputs.exitcode }}
+  checkov-outcome:
+    description: "Outcome of checkov scan"
+    value: ${{ steps.checkov.outcome }}
 
 runs:
   using: composite
@@ -57,9 +60,9 @@ runs:
       shell: bash
       run: |
         # Run Checkov Scan
-        set +e
+        # set +e
         checkov -d . --skip-framework github_actions -o github_failed_only  --output-file-path checkov-report-${{ github.run_id }}.md
-        echo "exitcode=$?" >> $GITHUB_OUTPUT
+        # echo "exitcode=$?" >> $GITHUB_OUTPUT
 
     - name: 📝 Upload Report
       uses: actions/upload-artifact@v4

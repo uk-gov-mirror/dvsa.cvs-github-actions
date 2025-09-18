@@ -19,6 +19,9 @@ inputs:
   checkov-exitcode:
     required: true
     description: 'Checkov scan exit code'
+  checkov-outcome:
+    required: true
+    description: 'Checkov scan outcome'
 runs:
   using: "composite"
   steps:
@@ -100,7 +103,7 @@ runs:
 
           </details>
 
-          #### Checkov Scan 📖\`${{ steps.parse_exitcode.outputs.checkov_result }}\`
+          #### Checkov Scan 📖\`${{ inputs.checkov-outcome }}\`
 
           <details><summary>Checkov scan output</summary>
 
