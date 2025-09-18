@@ -9,7 +9,10 @@ inputs:
     description: 'Terraform format exit code'
   fmt-outcome:
     required: true
-    description: 'Terraform format exit code'
+    description: 'Terraform format outcome'
+  init-outcome:
+    required: true
+    description: 'Terraform init outcome'
   validate-exitcode:
     required: true
     description: 'Terraform validate exit code'
@@ -84,7 +87,7 @@ runs:
 
           // 2. Prepare format of the comment
           const output = `#### Terraform Format and Style 🖌\`${{ inputs.fmt-outcome }}\`
-          #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+          #### Terraform Initialization ⚙️\`${{ inputs.init-outcome }}\`
           #### Terraform Validation 🤖\`${{ inputs.validate-outcome }}\`
           <details><summary>Validation Output</summary>
 

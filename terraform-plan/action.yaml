@@ -38,9 +38,15 @@ outputs:
   changes-detected:
     description: Terraform has detected changes
     value: ${{ steps.plan.outputs.changes-detected }}
+  init-outcome:
+    description: Outcome of terraform init
+    value: ${{ steps.init.outcome }}
   validate-exitcode:
     description: Outcome of terraform validate
     value: ${{ steps.validate.outputs.exitcode }}
+  validate-outcome:
+    description: Outcome of terraform validate
+    value: ${{ steps.validate.outcome }}
   plan-exitcode:
     description: Outcome of terraform plan
     value: ${{ steps.plan.outputs.exitcode }}
