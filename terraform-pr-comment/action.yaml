@@ -44,6 +44,12 @@ runs:
           } catch (e) {
             checkovOutput = 'Checkov report not found.';
           }
+          let validateOutput = '';
+          try {
+            validateOutput = fs.readFileSync('validate.txt', 'utf8');
+          } catch (e) {
+            validateOutput = 'Terraform validate not found.';
+          }
           let planOutput = '';
           try {
             planOutput = fs.readFileSync('plan.txt', 'utf8');
@@ -58,7 +64,7 @@ runs:
           <details><summary>Validation Output</summary>
 
           \`\`\`\n
-          ${{ inputs.validate_stdout }}
+          ${validateOutput}
           \`\`\`
 
           </details>
