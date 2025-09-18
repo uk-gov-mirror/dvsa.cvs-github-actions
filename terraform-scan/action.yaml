@@ -22,6 +22,9 @@ outputs:
   fmt-exitcode:
     description: "Exit code of terraform format"
     value: ${{ steps.fmt.outputs.exitcode }}
+  init-outcome:
+    description: Outcome of terraform init
+    value: ${{ steps.init.outcome }}
   fmt-outcome:
     description: "Outcome of terraform format"
     value: ${{ steps.fmt.outcome }}
@@ -37,6 +40,7 @@ runs:
   steps:
 
     - name: Initialize Terraform
+      id: init
       uses: dvsa/cvs-github-actions/terraform-initialize@develop
       with:
         folder-name: ${{ inputs.folder-name }}

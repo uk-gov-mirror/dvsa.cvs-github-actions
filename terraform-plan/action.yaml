@@ -58,7 +58,6 @@ runs:
   using: composite
   steps:
     - name: Initialize Terraform
-      id: init
       uses: dvsa/cvs-github-actions/terraform-initialize@develop
       with:
         folder-name: ${{ inputs.folder-name }}
