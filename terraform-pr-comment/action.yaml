@@ -1,0 +1,124 @@
+name: 'Terraform PR Comment'
+description: 'Posts Terraform checks comment on a PR'
+inputs:
+  github-token:
+    required: true
+    description: 'GitHub token for authentication'
+  init-outcome:
+    required: true
+    description: 'Terraform init outcome'
+  fmt-outcome:
+    required: true
+    description: 'Terraform format outcome'
+  validate-outcome:
+    required: true
+    description: 'Terraform validate outcome'
+  plan-outcome:
+    required: true
+    description: 'Terraform plan outcome'
+  checkov-outcome:
+    required: true
+    description: 'Checkov scan outcome'
+runs:
+  using: "composite"
+  steps:
+
+    - uses: actions/github-script@v6
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          // 1. Retrieve existing bot comments for the PR
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          })
+          const botComment = comments.find(comment => {
+            return comment.user.type === 'Bot' && comment.body.includes('Terraform Format and Style')
+          })
+
+          const fs = require('fs');
+          let fmtOutput = '';
+          try {
+            fmtOutput = fs.readFileSync('fmt.txt', 'utf8');
+          } catch (e) {
+            fmtOutput = 'Terraform fmt not found.';
+          }
+          let checkovOutput = '';
+          try {
+            checkovOutput = fs.readFileSync('checkov-report-${{ github.run_id }}.md/results_github_failed_only.md', 'utf8');
+          } catch (e) {
+            checkovOutput = 'Checkov report not found.';
+          }
+          let validateOutput = '';
+          try {
+            validateOutput = fs.readFileSync('validate.txt', 'utf8');
+          } catch (e) {
+            validateOutput = 'Terraform validate not found.';
+          }
+          let planOutput = '';
+          try {
+            planOutput = fs.readFileSync('plan.txt', 'utf8');
+          } catch (e) {
+            planOutput = 'Terraform plan not found.';
+          }
+
+          // 2. Prepare format of the comment
+          const output = `#### Terraform Initialization ⚙️\`${{ inputs.init-outcome }}\`
+          #### Terraform Format and Style 🖌\`${{ inputs.fmt-outcome }}\`
+
+          <details><summary>Format Output</summary>
+          
+          \`\`\`\n
+          ${fmtOutput}
+          \`\`\`
+
+          </details>
+
+          #### Terraform Validation 🤖\`${{ inputs.validate-outcome }}\`
+          <details><summary>Validation Output</summary>
+
+          \`\`\`\n
+          ${validateOutput}
+          \`\`\`
+
+          </details>
+
+          #### Terraform Plan 📖\`${{ inputs.plan-outcome }}\`
+
+          <details><summary>Terraform Plan</summary>
+
+          ### Terraform Plan
+
+          \`\`\`\n
+          ${planOutput}
+          \`\`\`
+
+          </details>
+
+          #### Checkov Scan 📖\`${{ inputs.checkov-outcome }}\`
+
+          <details><summary>Checkov scan output</summary>
+
+          ${checkovOutput}
+
+          </details>
+
+          *Pusher: @${{ github.actor }}, Workflow: \`${{ github.workflow }}\`*`;
+
+          // 3. If we have a comment, update it, otherwise create a new one
+          if (botComment) {
+            github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body: output
+            })
+          } else {
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+          }

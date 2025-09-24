@@ -18,11 +18,23 @@ inputs:
     description: Optional folder name, if not in repository
     default: '.'
 
+outputs:
+  init-outcome:
+    description: Outcome of terraform init
+    value: ${{ steps.init.outcome }}
+  fmt-outcome:
+    description: "Outcome of terraform format"
+    value: ${{ steps.fmt.outcome }}
+  checkov-outcome:
+    description: "Outcome of checkov scan"
+    value: ${{ steps.checkov.outcome }}
+
 runs:
   using: composite
   steps:
 
     - name: Initialize Terraform
+      id: init
       uses: dvsa/cvs-github-actions/terraform-initialize@develop
       with:
         folder-name: ${{ inputs.folder-name }}
@@ -32,18 +44,21 @@ runs:
         state-account: ${{ inputs.state-account }}
     
     - name: Terraform format
+      id: fmt
       continue-on-error: true
       shell: bash
       run: |
         # Format Terraform
         cd ${{ inputs.folder-name }}
-        terraform fmt -check=true -diff=true || true
-      
-    - name: Chekov Scan
+        terraform fmt -check=true -diff=true | tee fmt.txt
+
+    - name: Checkov Scan
+      id: checkov
       continue-on-error: true
-      run: |
-        checkov -d . --skip-framework github_actions -o github_failed_only  --output-file-path checkov-report-${{ github.run_id }}.md
       shell: bash
+      run: |
+        # Run Checkov Scan
+        checkov -d . --skip-framework github_actions -o github_failed_only  --output-file-path checkov-report-${{ github.run_id }}.md
 
     - name: 📝 Upload Report
       uses: actions/upload-artifact@v4

@@ -38,6 +38,12 @@ outputs:
   changes-detected:
     description: Terraform has detected changes
     value: ${{ steps.plan.outputs.changes-detected }}
+  validate-outcome:
+    description: Outcome of terraform validate
+    value: ${{ steps.validate.outcome }}
+  plan-outcome:
+    description: Outcome of terraform plan
+    value: ${{ steps.plan.outcome }}
 
 runs:
   using: composite
@@ -52,10 +58,11 @@ runs:
         state-account: ${{ inputs.state-account }}
 
     - name: ✅ Terraform Validate
+      id: validate
       shell: bash
       if: ${{ inputs.validate == 'true' }}
       run: |
-        terraform validate -no-color
+        terraform validate -no-color | tee validate.txt
         echo 'Terraform Validated ✅' >> $GITHUB_STEP_SUMMARY
 
     - name: 🛠️ Terraform Plan
