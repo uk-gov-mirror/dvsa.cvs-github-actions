@@ -1,133 +1,27 @@
-name: 🌱 Seed Tables
+name: Seed all tables
+description: Seed all tables
 
-on:
-  workflow_call:
-    inputs:
-      environment:
-        description: "The Environment to Seed (optional for manual runs)"
-        required: false
-        type: string
-      dry-run:
-        description: "Don't perform action, just output information"
-        required: false
-        type: boolean
-        default: false
-    secrets:
-      GH_TOKEN:
-        required: true
-      AWS_MGMT_ROLE:
-        required: false
+inputs:
+  environment-name:
+    description: Branch Identifier (either GitHub Branch or Environment Name)
+    required: true
+  github-branch:
+    description: The Github Branch
+  repository:
+    description: The repository hosting the Seeds
 
-env:
-  MGMT_AWS_ROLE: ${{ format('arn:aws:iam::{0}:role/{1}', fromJson(vars.AWS_ACCOUNTS_OLD)['mgmt'].id, vars.AWS_ROLE) }}
-  ENV_AWS_ROLE: ${{ format('arn:aws:iam::{0}:role/{1}', fromJson(vars.AWS_ACCOUNTS_OLD)[inputs.environment || 'develop'].id, vars.AWS_ROLE) }}
-  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+runs:
+  using: composite
+  steps:
 
-permissions:
-  id-token: write
-  contents: read
+    - name: 📥 Get Codebase
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.repository }}
+        ref: ${{ inputs.github-branch }}
 
-jobs:
-  environment:
-    name: 🧹 Prepare Environment
-    runs-on: ubuntu-latest
-    outputs:
-      github-branch: ${{ steps.environment.outputs.github-branch }}
-      environment-name: ${{ steps.settings.outputs.environment-name }}
-      environment-type: ${{ steps.settings.outputs.environment-type }}
-      service-name: ${{ steps.package.outputs.service-name }}
-      seed-target: ${{ steps.seed-target.outputs.seed-target }}
-      dry-run: ${{ steps.settings.outputs.dry-run }}
-
-    steps:
-      - name: 📥 Get Codebase
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'schedule' && 'main' || github.ref_name }}
-
-      - name: 📦 Read Package
-        id: package
-        run: |
-          package=$(cat package.json | jq -c)
-          echo "service-name=$(jq -rc '.name' <<< ${package})" >> $GITHUB_OUTPUT
-
-      - name: ↕️ Get Environment Details
-        id: environment
-        uses: dvsa/cvs-github-actions/environment@develop
-        with:
-          environment: ${{ github.event_name == 'schedule' && 'develop' || inputs.environment || github.ref_name }}
-
-      - name: 🎯 Seed Target
-        id: seed-target
-        run: |
-          if [[ -e "serverless.yml" ]]; then
-            seeds=$(yq '.custom.dynamodb.seed.dev.sources' serverless.yml -o json)
-            if [[ "${seeds}" != "null" ]]; then
-              seed=$(jq -c '. | to_entries | map({table:(.value.table | sub("\\w.+\\W-"; "")), seed_file:.value.sources.[]})' <<< "${seeds}")
-              echo "seed-target=${seed}" >> $GITHUB_OUTPUT
-            else
-              echo "No tables to seed" >> $GITHUB_STEP_SUMMARY
-            fi
-          fi
-
-      - name: Calculate Deployment Settings
-        id: settings
-        run: |
-          dry_run=${{ inputs.dry-run || (steps.environment.outputs.environment-type == 'feature' && (inputs.environment || github.ref_name) != 'feature') }}
-          environment_name=${{ steps.environment.outputs.environment-name }}
-          environment_type=${{ steps.environment.outputs.environment-type }}
-
-          echo "environment-name=${environment_name}" >> $GITHUB_OUTPUT
-          echo "environment-type=${environment_type}" >> $GITHUB_OUTPUT
-          echo "dry-run=${dry_run}" >> $GITHUB_OUTPUT
-
-          echo "## Deployment Settings" >> $GITHUB_STEP_SUMMARY
-          formatted_tables=$(jq -r 'map(.table | gsub("-"; " ")) | join(", ")' <<< '${{ steps.seed-target.outputs.seed-target }}') >> $GITHUB_STEP_SUMMARY
-          echo "| Tables to Seed | ${formatted_tables} |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          echo "| TF Workspace | ${environment_name} |" >> $GITHUB_STEP_SUMMARY
-          echo "| GitHub Environment | ${environment_type} |" >> $GITHUB_STEP_SUMMARY
-          echo "| GitHub Branch | $([[ '${{ github.event_name }}' == 'schedule' ]] && echo 'main' || echo '${{ steps.environment.outputs.github-branch }}') |" >> $GITHUB_STEP_SUMMARY
-          echo "| Dry Run | ${dry_run} |" >> $GITHUB_STEP_SUMMARY
-
-  seed-tables:
-    name: 🌱 Seed ${{ matrix.seed-target.table }}
-    runs-on: ubuntu-latest
-    needs: environment
-    environment: ${{ needs.environment.outputs.environment-type }}
-    strategy:
-      matrix:
-        seed-target: ${{ fromJson(needs.environment.outputs.seed-target) }}
-
-    steps:
-      - name: 📥 Get Codebase
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GH_TOKEN }}
-          ref: ${{ github.event_name == 'schedule' && 'main' || needs.environment.outputs.github-branch }}
-
-      - name: 🪪 Get Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ env.ENV_AWS_ROLE }}
-          aws-region: ${{ vars.DVSA_AWS_REGION }}
-          role-session-name: gha_seed_tables_${{ needs.environment.outputs.service-name }}_${{ needs.environment.outputs.environment-name }}
-
-      - name: 📇 Get Table Name
-        id: table_name
-        run: |
-          table_name=$(aws dynamodb list-tables | jq -r '.TableNames[] | select(. | contains("cvs-${{ needs.environment.outputs.environment-type }}-${{ matrix.seed-target.table }}"))')
-          echo "table-name=${table_name}" >> $GITHUB_OUTPUT
-
-      - name: 🧹 Purge Table
-        uses: dvsa/cvs-github-actions/table-purge@develop
-        with:
-          table: ${{ steps.table_name.outputs.table-name }}
-          dry-run: ${{ needs.environment.outputs.dry-run }}
-
-      - name: 🌱 Re-Seed Table
-        uses: dvsa/cvs-github-actions/table-seed@develop
-        if: ${{ !needs.environment.outputs.dry-run }}
-        with:
-          table: ${{ steps.table_name.outputs.table-name }}
-          seed-file: ${{ matrix.seed-target.seed_file }}
+    - name: 📥 Get Seed Tables
+      uses: ${{ format('dvsa/{0}/.github/workflows/seed-tables.yaml@develop', '${{inputs.repository}}') }}
+      with:
+        environment-name: ${{ inputs.environment-name }}
+        environment: ${{ inputs.environment }}
