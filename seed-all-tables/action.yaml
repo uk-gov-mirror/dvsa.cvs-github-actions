@@ -12,11 +12,11 @@ on:
         required: false
         type: boolean
         default: false
-      secrets:
-        GH_TOKEN:
-          required: true
-        AWS_MGMT_ROLE:
-          required: false
+    secrets:
+      GH_TOKEN:
+        required: true
+      AWS_MGMT_ROLE:
+        required: false
 
 env:
   MGMT_AWS_ROLE: ${{ format('arn:aws:iam::{0}:role/{1}', fromJson(vars.AWS_ACCOUNTS_OLD)['mgmt'].id, vars.AWS_ROLE) }}
