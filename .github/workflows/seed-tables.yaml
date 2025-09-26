@@ -12,6 +12,10 @@ on:
         required: false
         type: boolean
         default: false
+      branch:
+        description: 'Branch to create or build'
+        required: true
+        type: string
     secrets:
       GH_TOKEN:
         required: true
@@ -43,7 +47,7 @@ jobs:
       - name: 📥 Get Codebase
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'schedule' && 'main' || github.ref_name }}
+          ref: ${{ inputs.branch }}
 
       - name: 📦 Read Package
         id: package
@@ -55,7 +59,7 @@ jobs:
         id: environment
         uses: dvsa/cvs-github-actions/environment@develop
         with:
-          environment: ${{ github.event_name == 'schedule' && 'develop' || inputs.environment || github.ref_name }}
+          environment: ${{ inputs.environment || github.ref_name }}
 
       - name: 🎯 Seed Target
         id: seed-target
@@ -73,7 +77,7 @@ jobs:
       - name: Calculate Deployment Settings
         id: settings
         run: |
-          dry_run=${{ inputs.dry-run || (steps.environment.outputs.environment-type == 'feature' && (inputs.environment || github.ref_name) != 'feature') }}
+          dry_run=${{ inputs.dry-run }}
           environment_name=${{ steps.environment.outputs.environment-name }}
           environment_type=${{ steps.environment.outputs.environment-type }}
 
@@ -104,7 +108,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GH_TOKEN }}
-          ref: ${{ github.event_name == 'schedule' && 'main' || needs.environment.outputs.github-branch }}
+          ref: ${{ inputs.branch }}
 
       - name: 🪪 Get Credentials
         uses: aws-actions/configure-aws-credentials@v4
