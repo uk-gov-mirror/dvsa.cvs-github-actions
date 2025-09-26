@@ -16,10 +16,6 @@ on:
         description: 'Branch to create or build'
         required: true
         type: string
-      seed-target:
-        description: "Table to seed"
-        required: true
-        type: string
     secrets:
       GH_TOKEN:
         required: true
