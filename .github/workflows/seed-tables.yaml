@@ -59,7 +59,7 @@ jobs:
         id: environment
         uses: dvsa/cvs-github-actions/environment@develop
         with:
-          environment: ${{ inputs.environment || github.ref_name }}
+          environment: ${{ github.ref_name }}
 
       - name: 🎯 Seed Target
         id: seed-target
