@@ -42,7 +42,6 @@ jobs:
       service-name: ${{ steps.package.outputs.service-name }}
       seed-target: ${{ steps.seed-target.outputs.seed-target }}
       dry-run: ${{ steps.settings.outputs.dry-run }}
-      env-aws-role: ${{ steps.set-role.outputs.env-aws-role }}
 
     steps:
       - name: 📥 Get Codebase
