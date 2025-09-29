@@ -45,6 +45,7 @@ jobs:
       service-name: ${{ steps.package.outputs.service-name }}
       seed-target: ${{ steps.seed-target.outputs.seed-target }}
       dry-run: ${{ steps.settings.outputs.dry-run }}
+      env-aws-role: ${{ steps.set-role.outputs.env-aws-role }}
 
     steps:
       - name: 📥 Get Codebase
@@ -63,6 +64,13 @@ jobs:
         uses: dvsa/cvs-github-actions/environment@develop
         with:
           environment: ${{ github.ref_name }}
+
+      - name: Compute ENV_AWS_ROLE
+        id: set-role
+        run: |
+          env_name=${{ inputs.environment || 'develop' }}
+          account_id=$(echo '${{ vars.AWS_ACCOUNTS_OLD }}' | jq -r ".[$env_name].id")
+          echo "env-aws-role=arn:aws:iam::$account_id:role/${{ vars.AWS_ROLE }}" >> $GITHUB_OUTPUT
 
       - name: 🎯 Seed Target
         id: seed-target
