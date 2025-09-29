@@ -65,13 +65,6 @@ jobs:
         with:
           environment: ${{ github.ref_name }}
 
-      - name: Compute ENV_AWS_ROLE
-        id: set-role
-        run: |
-          env_name=${{ inputs.environment || 'develop' }}
-          account_id=$(echo '${{ vars.AWS_ACCOUNTS_OLD }}' | jq -r ".[$env_name].id")
-          echo "env-aws-role=arn:aws:iam::$account_id:role/${{ vars.AWS_ROLE }}" >> $GITHUB_OUTPUT
-
       - name: 🎯 Seed Target
         id: seed-target
         run: |
