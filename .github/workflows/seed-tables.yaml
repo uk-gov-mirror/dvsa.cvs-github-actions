@@ -123,7 +123,7 @@ jobs:
       - name: 📇 Get Table Name
         id: table_name
         run: |
-          table_name=$(aws dynamodb list-tables | jq -r '.TableNames[] | select(. | contains("cvs-${{ inputs.environment-type }}-${{ matrix.seed-target.table }}"))')
+          table_name=$(aws dynamodb list-tables | jq -r '.TableNames[] | select(. | contains("cvs-${{ needs.environment.outputs.environment-type }}-${{ matrix.seed-target.table }}"))')
           echo "table-name=${table_name}" >> $GITHUB_OUTPUT
 
       - name: 🧹 Purge Table
