@@ -100,8 +100,10 @@ runs:
           #### Checkov Scan 📖\`${{ inputs.checkov-outcome }}\`
 
           <details><summary>Checkov scan output</summary>
-
+          
+          \`\`\`\n
           ${checkovOutput}
+          \`\`\`\n
           [🔗 View full Checkov report artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
           </details>
