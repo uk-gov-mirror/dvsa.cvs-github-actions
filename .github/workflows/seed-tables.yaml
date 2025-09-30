@@ -19,6 +19,10 @@ on:
       environment-type:
         required: true
         type: string
+    outputs:
+      environment-name:
+        description: "Lowercased environment name"
+        value: ${{ jobs.environment.outputs.environment-name }}
     secrets:
       GH_TOKEN:
         required: true
