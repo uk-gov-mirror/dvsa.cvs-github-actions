@@ -46,7 +46,8 @@ runs:
           }
           let checkovOutput = '';
           try {
-            checkovOutput = fs.readFileSync('checkov-report-${{ github.run_id }}.md/results_github_failed_only.md', 'utf8');
+            checkovFull = fs.readFileSync('checkov-report-${{ github.run_id }}.md/results_github_failed_only.md', 'utf8');
+            checkovOutput = checkovFull.split('\n').find(line => line.includes('Passed Checks:')).trim();
           } catch (e) {
             checkovOutput = 'Checkov report not found.';
           }
@@ -99,8 +100,11 @@ runs:
           #### Checkov Scan 📖\`${{ inputs.checkov-outcome }}\`
 
           <details><summary>Checkov scan output</summary>
-
+          
+          \`\`\`\n
           ${checkovOutput}
+          \`\`\`\n
+          [🔗 View full Checkov report artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
           </details>
 
