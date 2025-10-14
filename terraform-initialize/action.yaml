@@ -8,11 +8,11 @@ inputs:
   terraform-version:
     description: The version of Terraform to use (defaults to 1.7.3)
     default: 1.7.3
-  folder-name:
-    description: Optional folder name, if not in repository
-    default: '.'
-  state-account:
-    description: Account Name for Core TF Standard
+  backend:
+    description: Use a custom Backend Configuration
+    default: 'false'
+  working-directory:
+    description: If the Terraform is not in the root of the folder, provide the working working directory
     required: false
   create-workspace:
     description: Create new Workspace if required
@@ -33,10 +33,10 @@ runs:
       shell: bash
       run: |
         # Initialize ${{ inputs.environment-name }}
+        ${{ inputs.working-directory != '' && format('cd {0}', inputs.working-directory) || '' }}
         if [[ ! -f ".terraform/environment" ]]; then
-          cd ${{ inputs.folder-name }}
-          terraform init -upgrade -reconfigure ${{ inputs.state-account != '' && format('-backend-config="workspace_key_prefix={0}"', inputs.state-account) || '' }}
-
-          terraform workspace select ${{ inputs.create-workspace == 'true' && '-or-create' || '' }} ${{ inputs.environment-name }} \
+          terraform init -upgrade${{ inputs.backend == 'true' && format(' -backend-config="workspace_key_prefix={0}"', env.TF_AWS_ACCOUNT_NAME) || '' }}
+          terraform workspace select${{ inputs.create-workspace == 'true' && ' -or-create' || '' }} ${{ inputs.environment-name }} \
           && $(echo "Workspace: ${{ inputs.environment-name }}" >> $GITHUB_STEP_SUMMARY)
         fi  
+ 

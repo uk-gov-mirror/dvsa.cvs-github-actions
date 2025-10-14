@@ -4,9 +4,12 @@ description: Perform a Terraform Plan
 inputs:
   options:
     description: Additional Terraform Options 
-  plan-id:
-    description: Artifact Id for a Terraform Plan
-    default: plan-${{ github.run_id }}
+  run-id:
+    description: Run Id for a Terraform Plan Artifact
+    default: ${{ github.run_id }}
+  artifact-name:
+    description: Name of the Terraform Plan Artifact
+    default: plan
   environment-name:
     description: Environment Identifier (e.g. `cb2-1099`)
     required: true
@@ -16,17 +19,20 @@ inputs:
   create-workspace:
     description: Should a new Terraform Workspace be created
     default: 'true'
-  folder-name:
-    description: Optional folder name, if not in repository
-    default: '.'
-  state-account:
-    description: Does TF use the Core Standard
-    required: false
   repository:
     description: The name of the repository
     default: 'cvs-tf'
   encryption-key:
     description: ARN of a KMS Key to use for Encryption
+    required: false
+  tfvars:
+    description: Should a TFVARS file be used
+    default: 'false'
+  backend:
+    description: Use a custom Backend Configuration
+    default: 'false'
+  working-directory:
+    description: If the Terraform is not in the root of the folder, provide the working working directory
     required: false
 
 runs:
@@ -35,16 +41,16 @@ runs:
     - name: Initialize Terraform
       uses: dvsa/cvs-github-actions/terraform-initialize@develop
       with:
-        folder-name: ${{ inputs.folder-name }}
         terraform-version: ${{ inputs.terraform-version }}
         environment-name: ${{ inputs.environment-name }}
         create-workspace: ${{ inputs.create-workspace }}
+        backend: ${{ inputs.backend }}
+        working-directory: ${{ inputs.working-directory }}
 
     - name: Retrieve Plan
       uses: actions/download-artifact@v4
       with:
-        name: ${{ inputs.plan-id }}
-        path: ${{ inputs.folder-name }}
+        name: ${{ inputs.artifact-name }}-${{ inputs.run-id }}
 
     - name: Decrypt Plan File
       uses: dvsa/cvs-github-actions/aws-encrypt@develop
@@ -52,19 +58,19 @@ runs:
       with:
         action: decrypt
         encryption-key: ${{ inputs.encryption-key }}
-        file: ${{ inputs.folder-name }}/terraform.tfplan
+        file: ${{ format('{0}/terraform.tfplan', inputs.working-directory != '' && inputs.working-directory || '.') }} 
 
     - name: Terraform Apply
       shell: bash
       run: |
         # Apply Terraform from a Plan
-        cd ${{ inputs.folder-name }}
-        terraform apply -lock-timeout=300s terraform.tfplan
+        ${{ inputs.working-directory != '' && format('cd {0}', inputs.working-directory) || '' }}
+        terraform apply ${{ inputs.options }} terraform.tfplan
         echo 'Terraform Applied ✅' >> $GITHUB_STEP_SUMMARY
 
     - name: 🔓 Unlock State File
-      if: failure()
+      if: failure() || cancelled()
       uses: dvsa/cvs-github-actions/terraform-state-unlock@develop
       with:
-        repository: ${{ inputs.repository}}
-        environment-name: ${{ inputs.environment-name }}
+        working-directory: ${{ inputs.working-directory }}
+        backend: ${{ inputs.backend }}
