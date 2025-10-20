@@ -1,64 +1,52 @@
-name: Terraform State Unlock
-description: Perform an unlock of the terraform state file
+name: Terraform State File Unlock
+description: Unlock Terraform state file after failure
 
 inputs:
-  options:
-    description: Additional Terraform Options 
   environment-name:
-    description: Environment Identifier (e.g. `cb2-1099`)
-    required: true
-  terraform-version:
-    description: The version of Terraform to use (defaults to 1.7.3)
-    default: 1.7.3
-  create-workspace:
-    description: Should a new Terraform Workspace be created
-    default: 'true'
-  repository:
-    description: The name of the repository
-    default: 'cvs-tf'
-  folder-name:
-    description: Optional folder name, if not in repository
-    default: '.'
-
+    description: Environment with the locked state
+    default: develop
+  working-directory:
+    description: If the Terraform is not in the root of the folder, provide the working working directory
+    required: false
+  backend:
+    description: Use a custom Backend Configuration
+    default: 'false'
+    
 runs:
   using: composite
   steps:
-    - name: Initialize Terraform
-      uses: dvsa/cvs-github-actions/terraform-initialize@develop
-      with:
-        folder-name: ${{ inputs.folder-name }}
-        terraform-version: ${{ inputs.terraform-version }}
-        environment-name: ${{ inputs.environment-name }}
-        create-workspace: ${{ inputs.create-workspace }}
-
-    - name: 🔓 Unlock State File 
+    - name: Unlock State File
       shell: bash
       run: |
-          echo "Environment Name: ${{ inputs.environment-name }}"
-          echo "Repository: ${{ inputs.repository }}"
+        # Unlock Terraform
+        ${{ inputs.working-directory != '' && format('cd {0}', inputs.working-directory) || '' }}
 
-          repository="${{ inputs.repository }}"
-          environment_name="${{ inputs.environment-name }}"
+        repository=${GITHUB_REPOSITORY##*/}
+        echo "Environment Name: ${{ inputs.environment-name }}"
+        echo "Repository: ${repository}"
 
-          if [ "$repository" = "cvs-tf" ]; then
-            bucket="${repository}-environment"
-          else
-            bucket="$repository"
-          fi
-
-          key="${bucket}/env:/${environment_name}/tf_state"
-
-          echo "Using DynamoDB table: $bucket"
-          echo "Looking up key: $key"
+        if [[ '${{ inputs.backend }}' == 'false' ]]; then
+          repository="${repository}-environment"
+          key="${repository}/env:/${environment_name}/tf_state"
+          echo "Using DynamoDB table: ${repository}"
+          echo "Looking up key: ${key}"
 
           lock_id=$(aws dynamodb get-item --table-name "$bucket" \
-            --key "{\"LockID\": {\"S\": \"$key\"}}" \
-            --attributes-to-get "Info" --profile "mgmt" | jq -r '.[].Info.S | fromjson | .ID')
+          --key "{\"LockID\": {\"S\": \"$key\"}}" \
+          --attributes-to-get "Info" \
+          --profile "mgmt" \
+          | jq -r '.[].Info.S | fromjson | .ID')
 
-          if [ -n "$lock_id" ]; then
-            echo "Attempting to unlock Terraform state for $environment_name..."
-              cd ${{ inputs.folder-name }}
-              terraform force-unlock -force "$lock_id"
-          else
-            echo "No lock found for $environment_name"
-          fi
+        else
+          lock_id=$(aws dynamodb get-item --table-name ${{ env.TF_BACKEND }} \
+          --key '{"LockID":{"S": "${{ env.TF_BACKEND }}/${{ env.TF_AWS_ACCOUNT_NAME }}:/${{ env.TF_VAR_AWS_ENVIRONMENT }}/${{ env.TF_VAR_DVSA_SERVICE }}"}}' \
+          --attributes-to-get Info \
+          | jq -r '.[].Info.S | fromjson | .ID')
+        fi
+
+        if [ -n "${lock_id}" ]; then
+          echo "Attempting to unlock Terraform state..."
+          terraform force-unlock ${lock_id} <<< "yes"
+        else	
+          echo "No lock found for ${environment_name}"	
+        fi

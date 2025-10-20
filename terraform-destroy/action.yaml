@@ -8,20 +8,20 @@ inputs:
   terraform-version:
     description: The version of Terraform to use (defaults to 1.7.3)
     default: 1.7.3
-  folder-name:
-    description: Optional folder name, if not in repository
-    default: '.'
-  state-account:
-    description: Account Name for Core TF Standard
-    required: false
-  repository:
-    description: The name of the repository
-    default: 'cvs-tf'
   encryption-key:
     description: ARN of a KMS Key to use for Encryption
     required: false
   infracost-key:
     description: API Key for InfraCost
+  tfvars:
+    description: Should a TFVARS file be used
+    default: 'false'
+  backend:
+    description: Use a custom Backend Configuration
+    default: 'false'  
+  working-directory:
+    description: If the Terraform is not in the root of the folder, provide the working working directory
+    required: false
   dry-run:
     description: Don't perform action, just output information
     default: "true"
@@ -32,21 +32,17 @@ runs:
     - name: Initialize Terraform
       uses: dvsa/cvs-github-actions/terraform-initialize@develop
       with:
-        folder-name: ${{ inputs.folder-name }}
         terraform-version: ${{ inputs.terraform-version }}
         environment-name: ${{ inputs.environment-name }}
         create-workspace: 'false'
-        state-account: ${{ inputs.state-account }}
+        working-directory: ${{ inputs.working-directory }}
+        backend: ${{ inputs.backend }}
 
     - name: Refresh Terraform
-      id: refresh
-      uses: dvsa/cvs-github-actions/terraform-refresh@develop
-      with:
-        terraform-version: ${{ inputs.terraform-version }}
-        environment-name: ${{ inputs.environment-name }}
-        repository: ${{ inputs.repository }}
-        create-workspace: 'false'
-        state-account: ${{ inputs.state-account }}
+      shell: bash
+      env:
+        AWS_PROFILE: main
+      run: terraform refresh
 
     - name: Remove VPC Connections
       shell: bash   
@@ -54,15 +50,14 @@ runs:
         AWS_PROFILE: main     
       run: |
         # Remove all Lambda VPC Connections
-        cd ${{ inputs.folder-name }}
-        for lambda in $(terraform show -no-color }${{ inputs.state-account != '' && ' -var-file=environments/$(terraform workspace show).tfvars' || '' }} | grep -E '\s+arn\s+=\s.*:lambda.*' | sed -E 's/.*"(.*:lambda.*:function:[a-z0-9-]+).*"/\1/' | sort | uniq); do
+        ${{ inputs.working-directory != '' && format('cd {0}', inputs.working-directory) || '' }}
+        for lambda in $(terraform show -no-color | grep -E '\s+arn\s+=\s.*:lambda.*' | sed -E 's/.*"(.*:lambda.*:function:[a-z0-9-]+).*"/\1/' | sort | uniq); do
           echo "${{ inputs.dry-run == 'true' && '(dryrun) ' || '' }}remove: ${lambda}"
           ${{ inputs.dry-run == 'true' && 'echo ' || '' }}aws lambda update-function-configuration --function-name ${lambda} --vpc-config '{"SubnetIds":[], "SecurityGroupIds":[]}' >/dev/null
         done
 
     - name: Terraform Plan
       id: plan
-      if: ${{ steps.refresh.outcome == 'success' }}
       uses: dvsa/cvs-github-actions/terraform-plan@develop
       with:
         options: '-destroy'
@@ -72,27 +67,27 @@ runs:
         create-workspace: 'false'
         encryption-key: ${{ inputs.encryption-key }}
         infracost-key: ${{ inputs.infracost-key }}
-        folder-name: ${{ inputs.folder-name }}
-        state-account: ${{ inputs.state-account }}
+        tfvars: ${{ inputs.tfvars }}
+        backend: ${{ inputs.backend }}
+        working-directory: ${{ inputs.working-directory }}
 
     - name: Terraform Apply
-      id: apply
-      if: ${{ inputs.dry-run == 'false' && steps.refresh.outcome == 'success' && steps.plan.outputs.changes-detected == 'true' }}
+      if: ${{ inputs.dry-run == 'false' && steps.plan.outputs.changes-detected == 'true' }}
       uses: dvsa/cvs-github-actions/terraform-apply@develop
       with:
         terraform-version: ${{ inputs.terraform-version }}
         environment-name: ${{ inputs.environment-name }}
         create-workspace: 'false'
         encryption-key: ${{ inputs.encryption-key }}
-        folder-name: ${{ inputs.folder-name }}
-        state-account: ${{ inputs.state-account }}
+        backend: ${{ inputs.backend }}
+        working-directory: ${{ inputs.working-directory }}
         
     - name: Remove Workspace
-      if: ${{ inputs.dry-run == 'false' && steps.refresh.outcome == 'success' && steps.plan.outputs.outcome == 'success' && steps.apply.outcome == 'success' }}
+      if: ${{ inputs.dry-run == 'false' }}
       shell: bash
       run: |
         # Remove ${{ inputs.environment-name }} Workspace
-        cd ${{ inputs.folder-name }}
+        ${{ inputs.working-directory != '' && format('cd {0}', inputs.working-directory) || '' }}
         terraform workspace select default
         terraform workspace delete ${{ inputs.environment-name }} 
         echo "Terraform Workspace \`${{ inputs.environment-name }}\` Deleted!" >> $GITHUB_STEP_SUMMARY
@@ -103,3 +98,10 @@ runs:
       with:
         environment-name: ${{ inputs.environment-name }}
         dry-run: ${{ inputs.dry-run }}
+
+    - name: 🔓 Unlock State File
+      if: failure() || cancelled()
+      uses: dvsa/cvs-github-actions/terraform-state-unlock@develop
+      with:
+        working-directory: ${{ inputs.working-directory }}
+        backend: ${{ inputs.backend }}
