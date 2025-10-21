@@ -92,7 +92,7 @@ runs:
         file: ${{ format('{0}/terraform.tfplan', inputs.working-directory != '' && inputs.working-directory || '.') }} 
 
     - name: 📝 Upload Plan
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v4.6.2
       with:
         name: ${{ inputs.artifact-name }}-${{ github.run_id }}
         path: |

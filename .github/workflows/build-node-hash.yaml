@@ -29,10 +29,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Get AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
           role-to-assume: ${{ secrets.CVS_MGMT_AWS_ROLE }}
           aws-region: ${{ secrets.DVSA_AWS_REGION }}
@@ -65,11 +65,11 @@ jobs:
 
       - name: Checkout CVS-NOP
         if: ${{ inputs.mysql_liquibase == true }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: dvsa/cvs-nop
           path: cvs-nop
-          ref: ${{ github.ref }}
+          ref: ${{ github.ref  == 'develop' && '' || github.ref }}
 
       - name: Move CVS-NOP
         if: ${{ inputs.mysql_liquibase == true }}

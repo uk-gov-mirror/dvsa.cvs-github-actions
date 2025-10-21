@@ -29,13 +29,13 @@ jobs:
     name: Terraform Plan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ inputs.version }}
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
           role-to-assume: ${{ secrets.MGMT_ROLE }}
           aws-region: eu-west-1
@@ -63,7 +63,7 @@ jobs:
           terraform show terraform.tfplan -no-color > plan.txt
         continue-on-error: true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4.6.2
         with:
           name: plan-${{ github.run_id }}
           path: |

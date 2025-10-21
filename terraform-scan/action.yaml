@@ -47,7 +47,7 @@ runs:
       shell: bash
 
     - name: 📝 Upload Report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v4.6.2
       with:
         name: checkov-report-${{ github.run_id }}
         path: checkov-report-${{ github.run_id }}.md
