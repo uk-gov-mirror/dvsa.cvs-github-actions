@@ -32,19 +32,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         with:
           path: this      
           
       - name: ⚙️ Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE }}
           aws-region: eu-west-1
           role-session-name: OPENAPIGEN
   
       - name: ♦️ Set Secrets
-        uses: aws-actions/aws-secretsmanager-get-secrets@v1
+        uses: aws-actions/aws-secretsmanager-get-secrets@v2.0.10
         with:
           secret-ids: openapi-gen/env
           parse-json-secrets: true
@@ -65,7 +65,7 @@ jobs:
           -g typescript-angular \
           -o ./generated
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         with:
           repository: ${{format('{0}/{1}', inputs.owner, inputs.pr_repository)}}
           path: pr_repo

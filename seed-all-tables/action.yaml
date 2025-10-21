@@ -15,10 +15,10 @@ runs:
   steps:
 
     - name: 📥 Get Codebase
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         repository: ${{ inputs.repository }}
-        ref: ${{ inputs.github-branch }}
+        ref: ${{ inputs.github-branch == 'develop' && '' || inputs.github-branch }}
 
     - name: 📥 Get Seed Tables
       uses: ${{ format('dvsa/{0}/.github/workflows/seed-tables.yaml@develop', '${{inputs.repository}}') }}

@@ -16,11 +16,11 @@ runs:
   using: composite
   steps:
     - name: 📥 Get Codebase
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         token: ${{ inputs.github-token }}
         repository: dvsa/cvs-devops
-        ref: ${{ inputs.service-branch }}
+        ref: ${{ inputs.service-branch == 'develop' && '' || inputs.service-branch }}
 
     - name: Trigger Build
       uses: .github/workflows/develop-tag-deploy.yaml

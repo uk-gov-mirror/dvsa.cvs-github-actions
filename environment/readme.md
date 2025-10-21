@@ -44,7 +44,7 @@ jobs:
           environment: ${{ inputs.environment || github.ref_name }}
 
       - name: Get Codebase
-          uses: actions/checkout@v4
+          uses: actions/checkout@v5
           with:
             ref: ${{ steps.environment.outputs.github-branch }}
 ...
@@ -85,7 +85,7 @@ jobs:
 
     steps:
       - name: Get Codebase
-          uses: actions/checkout@v4
+          uses: actions/checkout@v5
           with:
             ref: ${{ needs.preparation.outputs.github-branch }}
 ...
