@@ -51,6 +51,7 @@ runs:
       uses: actions/download-artifact@v5
       with:
         name: ${{ inputs.artifact-name }}-${{ inputs.run-id }}
+        path: ${{ inputs.working-directory }}
 
     - name: Decrypt Plan File
       uses: dvsa/cvs-github-actions/aws-encrypt@develop
@@ -72,5 +73,6 @@ runs:
       if: failure() || cancelled()
       uses: dvsa/cvs-github-actions/terraform-state-unlock@develop
       with:
-        working-directory: ${{ inputs.working-directory }}
         backend: ${{ inputs.backend }}
+        environment-name: ${{ inputs.environment-name }}
+        working-directory: ${{ inputs.working-directory }}
