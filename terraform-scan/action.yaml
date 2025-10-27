@@ -28,12 +28,13 @@ outputs:
   checkov-outcome:
     description: "Outcome of checkov scan"
     value: ${{ steps.checkov.outcome }}
-    
+
 runs:
   using: composite
   steps:
 
     - name: Initialize Terraform
+      id: init
       uses: dvsa/cvs-github-actions/terraform-initialize@develop
       with:
         terraform-version: ${{ inputs.terraform-version }}
@@ -43,12 +44,14 @@ runs:
         backend: ${{ inputs.backend }}
     
     - name: Terraform format
+      id: fmt
       continue-on-error: true
       shell: bash
       run: |
         terraform fmt -check=true -diff=true || true
       
     - name: Checkov Scan
+      id: checkov
       continue-on-error: true
       run: |
         # Checkov Scan

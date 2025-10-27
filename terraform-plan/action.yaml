@@ -64,6 +64,7 @@ runs:
         backend: ${{ inputs.backend }}
 
     - name: ✅ Terraform Validate
+      id: validate
       shell: bash
       if: ${{ inputs.validate == 'true' }}
       run: |
