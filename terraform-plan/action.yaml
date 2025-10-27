@@ -44,6 +44,12 @@ outputs:
   changes-detected:
     description: Terraform has detected changes
     value: ${{ steps.plan.outputs.changes-detected }}
+  validate-outcome:
+    description: Outcome of terraform validate
+    value: ${{ steps.validate.outcome }}
+  plan-outcome:
+    description: Outcome of terraform plan
+    value: ${{ steps.plan.outcome }}
 
 runs:
   using: composite

@@ -18,7 +18,17 @@ inputs:
     description: If the Terraform is not in the root of the folder, provide the working working directory
     required: false
 
-
+outputs:
+  init-outcome:
+    description: Outcome of terraform init
+    value: ${{ steps.init.outcome }}
+  fmt-outcome:
+    description: "Outcome of terraform format"
+    value: ${{ steps.fmt.outcome }}
+  checkov-outcome:
+    description: "Outcome of checkov scan"
+    value: ${{ steps.checkov.outcome }}
+    
 runs:
   using: composite
   steps:
