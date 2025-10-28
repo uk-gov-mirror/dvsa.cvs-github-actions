@@ -18,12 +18,23 @@ inputs:
     description: If the Terraform is not in the root of the folder, provide the working working directory
     required: false
 
+outputs:
+  init-outcome:
+    description: Outcome of terraform init
+    value: ${{ steps.init.outcome }}
+  fmt-outcome:
+    description: "Outcome of terraform format"
+    value: ${{ steps.fmt.outcome }}
+  checkov-outcome:
+    description: "Outcome of checkov scan"
+    value: ${{ steps.checkov.outcome }}
 
 runs:
   using: composite
   steps:
 
     - name: Initialize Terraform
+      id: init
       uses: dvsa/cvs-github-actions/terraform-initialize@develop
       with:
         terraform-version: ${{ inputs.terraform-version }}
@@ -33,12 +44,14 @@ runs:
         backend: ${{ inputs.backend }}
     
     - name: Terraform format
+      id: fmt
       continue-on-error: true
       shell: bash
       run: |
-        terraform fmt -check=true -diff=true || true
+        terraform fmt -check=true -diff=true | tee fmt.txt || true
       
     - name: Checkov Scan
+      id: checkov
       continue-on-error: true
       run: |
         # Checkov Scan
