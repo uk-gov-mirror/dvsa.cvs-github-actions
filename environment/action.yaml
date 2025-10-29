@@ -50,7 +50,7 @@ runs:
             github_branch=$(echo ${{ inputs.environment }} | tr '[:upper:]' '[:lower:]')
             ;;
 
-          ?(dev*|int*|*prod))
+          ?(dev*|int*|pr*))
             environment_type=${{ inputs.environment }}
             environment_name=$(echo ${{ inputs.environment }} | tr '[:upper:]' '[:lower:]')
             github_branch=$(echo ${{ inputs.environment }} | tr '[:upper:]' '[:lower:]')
