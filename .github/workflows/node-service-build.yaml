@@ -117,7 +117,7 @@ jobs:
   build-service:
     name: 🚀 Build & Store
     needs: environment
-    runs-on: ARM64
+    runs-on: ubuntu-latest
     steps:
       - name: Get Environment Details
         id: environment
