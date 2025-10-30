@@ -79,7 +79,7 @@ jobs:
         id: environment
         uses: dvsa/cvs-github-actions/environment@develop
         with:
-         environment: ${{ github.ref_name }}
+         environment: ${{ inputs.branch }}
 
       - uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
@@ -123,7 +123,7 @@ jobs:
         id: environment
         uses: dvsa/cvs-github-actions/environment@develop
         with:
-          environment: ${{ github.ref_name }}
+          environment: ${{ inputs.branch }}
 
       - name: 🪪 Get Credentials
         uses: aws-actions/configure-aws-credentials@v5.1.0
