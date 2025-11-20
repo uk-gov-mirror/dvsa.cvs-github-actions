@@ -59,7 +59,7 @@ runs:
           AWS_PROFILE=mgmt
           echo "Key: ${key}"
           if [[ $(aws s3 ls "s3://${key}.tflock") ]]; then
-            echo "Removing S3 Lockfile for $${{ inputs.environment-name }}"
+            echo "Removing S3 Lockfile for ${{ inputs.environment-name }}"
             aws s3 rm "s3://${key}.tflock"
 
           else
