@@ -40,6 +40,8 @@ runs:
 
     - name: 🔓 Unlock State File 
       shell: bash
+      env:
+        AWS_PROFILE: mgmt
       run: |
           # Attempt to unlock State File
           echo "Environment Name: ${{ inputs.environment-name }}"
@@ -56,7 +58,6 @@ runs:
           fi
 
           # Check for Lock File
-          AWS_PROFILE=mgmt
           echo "Key: ${key}"
           if [[ $(aws s3 ls "s3://${key}.tflock") ]]; then
             echo "Removing S3 Lockfile for ${{ inputs.environment-name }}"
