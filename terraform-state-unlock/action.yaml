@@ -45,7 +45,7 @@ runs:
           echo "Environment Name: ${{ inputs.environment-name }}"
           echo "Repository: ${{ inputs.repository }}"
 
-          if [[ "${{ inputs.backend }}" == "true" ]]; then
+          if [[ "${{ inputs.backend }}" == "false" ]]; then
             # Use legacy state file location
             bucket="cvs-tf-environment"
             key="${bucket}/env:/${{ inputs.environment-name }}/tf_state"
