@@ -41,17 +41,18 @@ runs:
     - name: 🔓 Unlock State File 
       shell: bash
       run: |
+          # Attempt to unlock State File
           echo "Environment Name: ${{ inputs.environment-name }}"
           echo "Repository: ${{ inputs.repository }}"
 
           if [ "${{ inputs.backend }}" = "true" ]; then
             # Use legacy state file location
             bucket="cvs-tf-environment"
-            key="${bucket}/env:/${inputs.environment-name}/tf_state"
+            key="${bucket}/env:/${{ inputs.environment-name }}/tf_state"
           else
             # use new standard state file location
             bucket="cvs-tf-state-${{ inputs.region }}"
-            key="${bucket}/${{ env.TF_AWS_ACCOUNT_NAME }}/${inputs.environment-name}/${{ inputs.repository }}"
+            key="${bucket}/${{ env.TF_AWS_ACCOUNT_NAME }}/${{ inputs.environment-name }}/${{ inputs.repository }}"
           fi
 
           # Check for Lock File
