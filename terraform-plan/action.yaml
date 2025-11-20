@@ -77,7 +77,7 @@ runs:
       run: |
         # Create Terraform Plan File
         ${{ inputs.working-directory != '' && format('cd {0}', inputs.working-directory) || '' }}
-        terraform plan ${{ inputs.options }}${{ inputs.tfvars == 'true' && format(' -var-file=environments/{0}.tfvars', inputs.environment-name) || '' }} -out terraform.tfplan
+        terraform plan ${{ inputs.options }} ${{ inputs.tfvars == 'true' && format(' -var-file=environments/{0}.tfvars', inputs.environment-name) || '' }} -out terraform.tfplan
         terraform show terraform.tfplan -no-color > plan.txt
         echo 'Plan Completed ✅' >> $GITHUB_STEP_SUMMARY
         plan_detail=$(terraform show -no-color terraform.tfplan | grep -E 'Plan:|Your infrastructure' || echo "No environment currently deployed")
@@ -131,3 +131,4 @@ runs:
         backend: ${{ inputs.backend }}
         environment-name: ${{ inputs.environment-name }}
         working-directory: ${{ inputs.working-directory }}
+        repository: ${{ inputs.repository }}

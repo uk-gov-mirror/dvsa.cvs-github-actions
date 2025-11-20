@@ -103,5 +103,7 @@ runs:
       if: failure() || cancelled()
       uses: dvsa/cvs-github-actions/terraform-state-unlock@develop
       with:
-        working-directory: ${{ inputs.working-directory }}
         backend: ${{ inputs.backend }}
+        environment-name: ${{ inputs.environment-name }}
+        working-directory: ${{ inputs.working-directory }}
+        repository: ${{ inputs.repository }}
