@@ -77,6 +77,6 @@ runs:
               echo "Attempting to unlock Terraform state for $${{ inputs.environment-name }}..."
               terraform force-unlock -force "$lock_id" <<< "yes"
             else
-              echo "No lock found for $environment_name"
+              echo "No lock found for ${{ inputs.environment-name }}"
             fi
           fi
