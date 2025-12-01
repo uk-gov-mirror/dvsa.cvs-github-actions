@@ -8,11 +8,11 @@ inputs:
   dynamo_db:
     description: Require an install of Serverless DynamoDB
     default: "false"
-  ignore_fail: 
+  ignore_fail:
     description: Ignore any test failures
     default: "false"
 outputs:
-  package: 
+  package:
     description: Artifact
     value: 'artifacts/${{ github.event.repository.name }}-artifacts-${{ github.event.pull_request.number || github.run_id }}'
 
@@ -45,9 +45,9 @@ runs:
       shell: bash
       run: npx tsc --noEmit
 
-    - name: ⚒️ Build project
+    - name: ⚒️ Build & package
       shell: bash
-      run: npm run build
+      run: npm run package
 
     - name: 📝 Lint codebase
       shell: bash
@@ -57,10 +57,6 @@ runs:
       shell: bash
       run: npm run test:coverage
       continue-on-error: ${{ inputs.ignore_fail == 'true' }}
-
-    - name: 📦 Package for Lambda
-      shell: bash
-      run: npm run package
 
     - name: ☁️ Upload to GitHub Summary
       uses: actions/upload-artifact@v4.6.2
