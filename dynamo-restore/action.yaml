@@ -21,40 +21,72 @@ runs:
 
     - name: Export Table
       shell: bash
-      env:
-        source: ${{ inputs.source }}
-        destination: ${{ inputs.destination }}
-        table: ${{ inputs.dynamo-table }}
       run: |
         # Create Table Backup
         account=$(aws sts get-caller-identity --query "Account" --output text)
+        table=${{ inputs.dynamo-table }}
 
         # Calculate proper table name for Reference Data
         if [[ "${table}" == *"reference-data"* ]]; then
-          target_table_name=$(aws dynamodb list-tables | jq -r --arg table $(sed -E 's/${{ env.source }}/${{ env.destination }}/g' <<< ${table%-*}) '[.TableNames[] | select(. | contains($table))][0]')
+          target_table_name=$(aws dynamodb list-tables --query "TableNames[?contains(@,'$(sed -E 's/${{ inputs.source }}/${{ inputs.destination }}/g' <<< ${table%-*})')]" --output text)
         else
-          target_table_name=$(aws dynamodb list-tables | jq -r --arg table $(sed -E 's/${{ env.source }}/${{ env.destination }}/g' <<< ${table}) '[.TableNames[] | select(. | contains($table))][0]')
+          target_table_name=$(aws dynamodb list-tables --query "TableNames[?contains(@,'$(sed -E 's/${{ inputs.source }}/${{ inputs.destination }}/g' <<< ${table})')]" --output text)
         fi
+
+        # Get Table Details
+        table_arn=$(aws dynamodb describe-table --table-name ${target_table_name} --output text --query "Table.TableArn")
+        table_tags=$(aws dynamodb list-tags-of-resource --resource-arn ${table_arn} | jq -c '.Tags')
+
+        # Get Table Stream Info
+        printf "# \033[0;34mRead stream specification for table \033[0m${target_table_name}\n"
+        declare -A stream=()
+        while IFS= read -r -d '' key && IFS= read -r -d '' value; do   
+            stream[$key]=$value
+        done < <(jq -jc '.Table.StreamSpecification | to_entries[] | (.key, "\u0000", .value, "\u0000")' <<<$(aws dynamodb describe-table --table-name ${target_table_name}))
 
         # Delete PreProd Table
         printf "# \033[0;34mDelete table \033[0m${target_table_name}\n"
-        aws dynamodb delete-table --table-name "arn:aws:dynamodb:eu-west-1:${account}:table/${target_table_name}" \
-        && aws dynamodb wait table-not-exists --table-name "arn:aws:dynamodb:eu-west-1:${account}:table/${target_table_name}" \
+        aws dynamodb delete-table --table-name ${table_arn} \
+        && aws dynamodb wait table-not-exists --table-name ${table_arn} \
         || printf "## \033[0;32mTable does not exist\033[0m\n"
         
         # Create PreProd Table from Prod Backup
         printf "# \033[0;34mRestore \033[0m${target_table_name} \033[0;34mfrom \033[0m${{ env.source }}\n"
-        aws dynamodb restore-table-to-point-in-time --source-table-arn "arn:aws:dynamodb:eu-west-1:${account}:table/${{ inputs.dynamo-table }}" --target-table-name "${target_table_name}" --use-latest-restorable-time
+        aws dynamodb restore-table-to-point-in-time --source-table-arn $(aws dynamodb describe-table --table-name ${{ inputs.dynamo-table }} --output text --query "Table.TableArn") --target-table-name "${target_table_name}" --use-latest-restorable-time
         
         # Wait for table to complete restoring
         complete=false
         while [[ "${complete}" == "false" ]]; do 
-          aws dynamodb wait table-exists --table-name "arn:aws:dynamodb:eu-west-1:${account}:table/${target_table_name}" && complete=true || printf "# \033[0;34mRestore \033[0m${target_table_name} \033[0;34mstill in progress...\033[0m\n"
+          aws dynamodb wait table-exists --table-name ${table_arn} && complete=true || printf "# \033[0;34mRestore \033[0m${target_table_name} \033[0;34mstill in progress...\033[0m\n"
         done
+        aws dynamodb tag-resource --resource-arn ${table_arn} --tags ${table_tags}
         printf "# \033[0;34mRestore complete!\033[0m\n"
+
+
+        # Create Stream (if applicable)
+        if [[ ("${stream[StreamEnabled]}" == "true" ) && ($(aws dynamodb describe-table --table-name $target_table_name | jq -r '.Table.StreamSpecification') == null) ]]; then
+          printf "# \033[0;34mEnable Stream on \033[0m${target_table_name}\n"
+          stream_arn=$(aws dynamodb update-table --table-name ${target_table_name} --stream-specification "StreamEnabled=true,StreamViewType=${stream[StreamViewType]}" | jq -r '.TableDescription.LatestStreamArn')
+
+          for target in $(aws pipes list-pipes --query "Pipes[?contains(Source, '${target_table_name}/stream')]" | jq -r '.[].Name'); do
+            printf "# \033[0;34mFound Pipe \033[0m${target} \033[0;34musing \033[0m${target_table_name}\n"
+            declare -A pipe=()
+            while IFS= read -r -d '' key && IFS= read -r -d '' value; do   
+                pipe[$key]=$value
+            done < <(jq -jc '. | to_entries[] | (.key, "\u0000", .value, "\u0000")' <<<$(aws pipes describe-pipe --name ${target}))
+
+            for policy in $(aws iam list-role-policies --role-name ${pipe[RoleArn]##*/} | jq -r '.PolicyNames[]'); do 
+              printf "# \033[0;34mUpdating IAM Role Policy \033[0m${policy} \033[0;34mon \033[0m${pipe[RoleArn]##*/}\n"
+              policy_document=$(aws iam get-role-policy --role-name ${pipe[RoleArn]##*/} --policy-name $policy | jq -rc '.PolicyDocument' | sed -e "s#${table_arn}/stream/[0-9T:.-]*#${stream_arn}#g")
+              aws iam put-role-policy --role-name ${pipe[RoleArn]##*/} --policy-name $policy --policy-document ${policy_document}
+            done
+
+            printf "# \033[0;34mReplacing Pipe \033[0m${target}\n"
+            aws pipes delete-pipe --name ${target} && sleep 5s
+            aws pipes create-pipe --name ${target} --role-arn ${pipe[RoleArn]} --source ${stream_arn} --source-parameters ${pipe[SourceParameters]} --target ${pipe[Target]} --description "${pipe[Description]}" --tags ${pipe[Tags]}
+          done
+        fi        
         
-        # Disable Backups (if required)
-        if [[ "${{ inputs.enable-backups }}" == "false" ]]; then
-          printf "# \033[0;34mDisable Point In Time Recovery (PITR) on \033[0m${{ inputs.dynamo-table }}\n"
-          aws dynamodb update-continuous-backups --table-name "${{ inputs.dynamo-table }}" --point-in-time-recovery-specification PointInTimeRecoveryEnabled=${{ inputs.enable-backups }}
-        fi
+        # Reset Backups
+        printf "# \033[0;34mReset Point In Time Recovery (PITR) on \033[0m${{ inputs.dynamo-table }}\n"
+        aws dynamodb update-continuous-backups --table-name "${{ inputs.dynamo-table }}" --point-in-time-recovery-specification PointInTimeRecoveryEnabled=${{ inputs.enable-backups }}
