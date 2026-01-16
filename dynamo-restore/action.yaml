@@ -28,9 +28,9 @@ runs:
 
         # Calculate proper table name for Reference Data
         if [[ "${table}" == *"reference-data"* ]]; then
-          target_table_name=$(aws dynamodb list-tables --query "TableNames[?contains(@,'$(sed -E 's/${{ inputs.source }}/${{ inputs.destination }}/g' <<< ${table%-*})')]" --output text)
+          target_table_name=$(aws dynamodb list-tables --query "TableNames[?contains(@,'$(sed -E 's/${{ inputs.source }}/${{ inputs.destination }}/g' <<< ${table%-*})')] | [0]" --output text)
         else
-          target_table_name=$(aws dynamodb list-tables --query "TableNames[?contains(@,'$(sed -E 's/${{ inputs.source }}/${{ inputs.destination }}/g' <<< ${table})')]" --output text)
+          target_table_name=$(aws dynamodb list-tables --query "TableNames[?contains(@,'$(sed -E 's/${{ inputs.source }}/${{ inputs.destination }}/g' <<< ${table})')] | [0]" --output text)
         fi
 
         # Get Table Details
