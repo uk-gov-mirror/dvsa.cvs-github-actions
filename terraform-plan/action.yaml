@@ -123,12 +123,3 @@ runs:
         terraform show -json terraform.tfplan > plan.json
         infracost breakdown --path plan.json --format json --out-file breakdown.json
         infracost output --path breakdown.json --format github-comment >> $GITHUB_STEP_SUMMARY
-
-    - name: 🔓 Unlock State File
-      if: failure() || cancelled()
-      uses: dvsa/cvs-github-actions/terraform-state-unlock@develop
-      with:
-        backend: ${{ inputs.backend }}
-        environment-name: ${{ inputs.environment-name }}
-        working-directory: ${{ inputs.working-directory }}
-        repository: ${{ inputs.repository }}
