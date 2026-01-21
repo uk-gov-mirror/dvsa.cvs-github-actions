@@ -98,12 +98,3 @@ runs:
       with:
         environment-name: ${{ inputs.environment-name }}
         dry-run: ${{ inputs.dry-run }}
-
-    - name: 🔓 Unlock State File
-      if: failure() || cancelled()
-      uses: dvsa/cvs-github-actions/terraform-state-unlock@develop
-      with:
-        backend: ${{ inputs.backend }}
-        environment-name: ${{ inputs.environment-name }}
-        working-directory: ${{ inputs.working-directory }}
-        repository: ${{ inputs.repository }}
