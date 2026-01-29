@@ -65,10 +65,3 @@ runs:
         name: checkov-report-${{ github.run_id }}
         path: checkov-report-${{ github.run_id }}.md
         retention-days: 5
-
-    - name: 🔓 Unlock State File
-      if: failure() || cancelled()
-      uses: dvsa/cvs-github-actions/terraform-state-unlock@develop
-      with:
-        working-directory: ${{ inputs.working-directory }}
-        backend: ${{ inputs.backend }}

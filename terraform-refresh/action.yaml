@@ -47,10 +47,3 @@ runs:
         # Refresh Terraform
         ${{ inputs.working-directory != '' && format('cd {0}', inputs.working-directory) || '' }}
         terraform refresh ${{ inputs.state-account != '' && ' -var-file=environments/$(terraform workspace show).tfvars' || '' }}
-
-    - name: 🔓 Unlock State File
-      if: steps.refresh.outcome == 'failure'
-      uses: dvsa/cvs-github-actions/terraform-state-unlock@develop
-      with:
-        repository: ${{ inputs.repository }}
-        environment-name: ${{ inputs.environment-name }}
