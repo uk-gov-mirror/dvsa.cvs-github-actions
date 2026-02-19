@@ -53,7 +53,7 @@ outputs:
 
 runs:
   using: composite
-  steps:
+  pre:
     - name: Initialize Terraform
       uses: dvsa/cvs-github-actions/terraform-initialize@develop
       with:
@@ -71,6 +71,7 @@ runs:
         terraform validate -no-color | tee validate.txt
         echo 'Terraform Validated ✅' >> $GITHUB_STEP_SUMMARY
 
+  steps:
     - name: 🛠️ Terraform Plan
       id: plan
       shell: bash
@@ -123,3 +124,15 @@ runs:
         terraform show -json terraform.tfplan > plan.json
         infracost breakdown --path plan.json --format json --out-file breakdown.json
         infracost output --path breakdown.json --format github-comment >> $GITHUB_STEP_SUMMARY
+
+  post:
+    - name: Clean State
+      shell: bash
+      run: |
+        # Check for lock file
+        state_folder=${{ inputs.backend == 'true' && 'cvs-tf-state-${AWS_REGION}/${{ env.TF_AWS_ACCOUNT_NAME }}/' || 'cvs-tf-environment/env:/' }}
+        state_file=${{ inputs.backend == 'true' && format('{0}/{1}', inputs.environment-name, env.TF_VAR_DVSA_SERVICE) || format('{0}/tf_state', inputs.environment) }}
+        if [[ $(aws s3 ls s3://${state_folder}/${state_file}.tflock) != "" ]]; then
+          echo "Releasing state lock. This may take a few moments..."
+          aws s3 rm s3://${state_folder}/${state_file}.tflock
+        fi
