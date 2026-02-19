@@ -71,7 +71,7 @@ runs:
         terraform validate -no-color | tee validate.txt
         echo 'Terraform Validated ✅' >> $GITHUB_STEP_SUMMARY
 
-  steps:
+  main:
     - name: 🛠️ Terraform Plan
       id: plan
       shell: bash
