@@ -12,6 +12,9 @@ outputs:
   github-branch: 
     description: The GitHub Branch Name
     value: ${{ steps.branch.outputs.github-branch }}
+  environment:
+    description: Environment Shortened Name
+    value: ${{ steps.branch.outputs.environment }}
   environment-name:
     description: The AWS Environment Name
     value: ${{ steps.branch.outputs.environment-name }}
@@ -62,15 +65,31 @@ runs:
 
         esac
 
+        # Parse new environment names
+        case "${environment-typt}" in
+          develop)
+            environment=dev;;
+          integration)
+            environment=int;;
+          preprod)
+            environment=prep;;
+          *)
+            environment=environment_name;;
+        esac
+
         # Output values to GitHub
+        echo "environment=${environment}" >> $GITHUB_OUTPUT
         echo "environment-type=${environment_type}" >> $GITHUB_OUTPUT
         echo "environment-name=${environment_name}" >> $GITHUB_OUTPUT
         echo "github-branch=${github_branch}" >> $GITHUB_OUTPUT
         echo "environment-shortname=$(tr -d '\.-' <<< $environment_name | tr '[:lower:]' '[:upper:]')" >> $GITHUB_OUTPUT
 
         if [[ '${{ inputs.output-summary }}' == 'true' ]]; then
+          echo "environment=${environment}" >> $GITHUB_STEP_SUMMARY
           echo "environment-type=${environment_type}" >> $GITHUB_STEP_SUMMARY
           echo "environment-name=${environment_name}" >> $GITHUB_STEP_SUMMARY
           echo "environment-shortname=$(tr -d '\.-' <<< $environment_name | tr '[:lower:]' '[:upper:]')" >> $GITHUB_STEP_SUMMARY
           echo "github-branch=${github_branch}" >> $GITHUB_STEP_SUMMARY
         fi
+
+       
