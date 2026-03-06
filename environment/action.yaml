@@ -81,10 +81,10 @@ runs:
           preprod)
             environment=prep;;
           feature)
-            environment=feature
+            environment=${environment_name}
             nop_environment=nonprod
           *)
-            environment=environment_name;;
+            environment=${environment_name};;
         esac
 
         # Output values to GitHub
