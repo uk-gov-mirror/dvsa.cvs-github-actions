@@ -24,6 +24,9 @@ outputs:
   environment-type:
     description: The type of AWS Environment Identified
     value: ${{ steps.branch.outputs.environment-type }}
+  nop-environment:
+    description: The NOP Database Environment Identified
+    value: ${{ steps.branch.outputs.nop-environment }}
 
 runs:
   using: composite
@@ -45,6 +48,7 @@ runs:
             environment_type=release
             environment_name=$(echo ${{ inputs.environment }} | sed 's/release\///' | tr '[:upper:]' '[:lower:]')
             github_branch=release/$(echo ${{ inputs.environment }} | sed 's/release\///' | tr '[:upper:]' '[:lower:]')
+            nop_
             ;;
 
           ?(main))
@@ -66,13 +70,19 @@ runs:
         esac
 
         # Parse new environment names
-        case "${environment-typt}" in
+        nop_environment=${environment_name}
+        case "${environment-type}" in
           develop)
-            environment=dev;;
+            environment=dev
+            nop_environment=nonprod
+            ;;
           integration)
             environment=int;;
           preprod)
             environment=prep;;
+          feature)
+            environment=feature
+            nop_environment=nonprod
           *)
             environment=environment_name;;
         esac
@@ -83,6 +93,7 @@ runs:
         echo "environment-name=${environment_name}" >> $GITHUB_OUTPUT
         echo "github-branch=${github_branch}" >> $GITHUB_OUTPUT
         echo "environment-shortname=$(tr -d '\.-' <<< $environment_name | tr '[:lower:]' '[:upper:]')" >> $GITHUB_OUTPUT
+        echo "nop-environment=${nop-environment}" >> $GITHUB_OUTPUT
 
         if [[ '${{ inputs.output-summary }}' == 'true' ]]; then
           echo "environment=${environment}" >> $GITHUB_STEP_SUMMARY
@@ -90,6 +101,7 @@ runs:
           echo "environment-name=${environment_name}" >> $GITHUB_STEP_SUMMARY
           echo "environment-shortname=$(tr -d '\.-' <<< $environment_name | tr '[:lower:]' '[:upper:]')" >> $GITHUB_STEP_SUMMARY
           echo "github-branch=${github_branch}" >> $GITHUB_STEP_SUMMARY
+          echo "nop-environment=${nop-environment}" >> $GITHUB_STEP_SUMMARY
         fi
 
        
