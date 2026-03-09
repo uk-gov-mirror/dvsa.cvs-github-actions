@@ -71,7 +71,7 @@ runs:
 
         # Parse new environment names
         nop_environment=${environment_name}
-        case "${environment-type}" in
+        case "${environment_type}" in
           develop)
             environment=dev
             nop_environment=nonprod
