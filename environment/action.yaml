@@ -83,6 +83,7 @@ runs:
           feature)
             environment=${environment_name}
             nop_environment=nonprod
+            ;;
           *)
             environment=${environment_name};;
         esac
