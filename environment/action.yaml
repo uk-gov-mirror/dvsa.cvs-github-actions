@@ -5,6 +5,9 @@ inputs:
   environment:
     description: Branch Identifier (either GitHub Branch or Environment Name)
     required: true
+  target-environment:
+    description: Environment to deploy to (default is current environment)
+    required: false
   output-summary:
     description: Output a summary of calculated values
     default: 'true'
@@ -70,8 +73,9 @@ runs:
         esac
 
         # Parse new environment names
+        target=${{ inputs.targe-environment || inputs.environment }}
         nop_environment=${environment_name}
-        case "${environment_type}" in
+        case "${target}" in
           develop)
             environment=dev
             nop_environment=nonprod
