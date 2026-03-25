@@ -43,8 +43,10 @@ runs:
         folder=${{ fromJson(inputs.backend) && format('{0}/{1}', env.TF_AWS_ACCOUNT_NAME, inputs.environment-name) || format('env:/{0}', inputs.environment-name) }}
 
         for lock in $(aws s3api list-objects-v2 --bucket ${bucket} --prefix ${folder} --query "Contents[?ends_with(Key, 'tflock')].Key" --output text); do
-          printf "🗑️ \033[0;34mDeleting Lock File \033[0m${lock}\n"
-          aws s3api delete-object --bucket ${bucket} --key ${lock}
+          if [[ "${lock}" != "None" ]]; then
+            printf "🗑️ \033[0;34mDeleting Lock File \033[0m${lock}\n"
+            aws s3api delete-object --bucket ${bucket} --key ${lock}
+          fi
         done
 
         # Initialise Terraform
