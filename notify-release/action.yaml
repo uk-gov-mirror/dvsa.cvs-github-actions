@@ -1,0 +1,85 @@
+name: Notify Teams
+description: Posts a deployment status message to a Teams channel
+
+inputs:
+  environment:
+    description: Target environment (int, preprod, prod)
+    required: true
+  status:
+    description: Job status (success, failure, cancelled)
+    required: true
+  job_name:
+    description: Name of the job that ran
+    required: true
+  branch:
+    description: Release branch name
+    required: true
+  TEAMS_WEBHOOK_CVS:
+    description: Teams webhook URL
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Set environment label and colour
+      id: config
+      shell: bash
+      run: |
+        ENV="${{ inputs.environment }}"
+        case "$ENV" in
+          int|integration)
+            echo "env_label=Integration (INT)" >> $GITHUB_OUTPUT
+            echo "colour=0076D7" >> $GITHUB_OUTPUT
+            ;;
+          preprod|pre-prod|pre_prod)
+            echo "env_label=Pre-Production" >> $GITHUB_OUTPUT
+            echo "colour=FF991F" >> $GITHUB_OUTPUT
+            ;;
+          prod|production)
+            echo "env_label=Production" >> $GITHUB_OUTPUT
+            echo "colour=D92D20" >> $GITHUB_OUTPUT
+            ;;
+          *)
+            echo "env_label=$ENV" >> $GITHUB_OUTPUT
+            echo "colour=888888" >> $GITHUB_OUTPUT
+            ;;
+        esac
+
+    - name: Set status emoji
+      id: status
+      shell: bash
+      run: |
+        case "${{ inputs.status }}" in
+          success)   echo "emoji=✅" >> $GITHUB_OUTPUT ;;
+          failure)   echo "emoji=🔴" >> $GITHUB_OUTPUT ;;
+          cancelled) echo "emoji=⚠️" >> $GITHUB_OUTPUT ;;
+          *)         echo "emoji=🔵" >> $GITHUB_OUTPUT ;;
+        esac
+
+    - name: Post to Teams
+      shell: bash
+      run: |
+        curl -H "Content-Type: application/json" \
+          -d '{
+            "@type": "MessageCard",
+            "@context": "https://schema.org/extensions",
+            "themeColor": "${{ steps.config.outputs.colour }}",
+            "summary": "${{ inputs.job_name }} — ${{ inputs.status }}",
+            "sections": [{
+              "activityTitle": "${{ steps.status.outputs.emoji }} ${{ inputs.job_name }}",
+              "activitySubtitle": "${{ steps.config.outputs.env_label }} — ${{ inputs.branch }}",
+              "facts": [
+                { "name": "Status",       "value": "${{ inputs.status }}" },
+                { "name": "Environment",  "value": "${{ steps.config.outputs.env_label }}" },
+                { "name": "Branch",       "value": "${{ inputs.branch }}" },
+                { "name": "Triggered by", "value": "${{ github.actor }}" },
+                { "name": "Run",          "value": "#${{ github.run_number }}" }
+              ]
+            }],
+            "potentialAction": [{
+              "@type": "OpenUri",
+              "name": "View GitHub Run",
+              "targets": [{ "os": "default", "uri": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" }]
+            }]
+          }' \
+          "${{ inputs.TEAMS_WEBHOOK_CVS }}"
