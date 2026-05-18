@@ -61,7 +61,7 @@ jobs:
           ref: ${{ inputs.branch == 'develop' && '' || inputs.branch }}
 
       - name: ⚙️ Configure Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
 
@@ -74,7 +74,7 @@ jobs:
         id: branch
 
       - name: ⚙️ Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v5.1.0
+        uses: aws-actions/configure-aws-credentials@v6.1.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE }}
           aws-region: eu-west-1

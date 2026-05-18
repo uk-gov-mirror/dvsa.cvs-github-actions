@@ -38,11 +38,11 @@ jobs:
           distribution: 'corretto'
           java-version: '11'
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
 
-      - uses: aws-actions/configure-aws-credentials@v5.1.0
+      - uses: aws-actions/configure-aws-credentials@v6.1.1
         with:
           role-to-assume: ${{ secrets.MGMT_ROLE_NAME }}
           aws-region: eu-west-1

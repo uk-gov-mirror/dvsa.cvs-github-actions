@@ -53,7 +53,7 @@ jobs:
           terraform_version: "1.7.3"
           terraform_wrapper: false
 
-      - uses: aws-actions/configure-aws-credentials@v5.1.0
+      - uses: aws-actions/configure-aws-credentials@v6.1.1
         with:
           role-to-assume: ${{ secrets.MGMT_ROLE }}
           aws-region: eu-west-1

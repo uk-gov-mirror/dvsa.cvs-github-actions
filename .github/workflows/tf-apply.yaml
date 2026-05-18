@@ -61,7 +61,7 @@ jobs:
           name: plan-${{ inputs.run-id }}
           path: .
 
-      - uses: aws-actions/configure-aws-credentials@v5.1.0
+      - uses: aws-actions/configure-aws-credentials@v6.1.1
         with:
           role-to-assume: ${{ secrets.AWS_MGMT_ROLE }}
           aws-region: eu-west-1
