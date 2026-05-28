@@ -5,6 +5,9 @@ inputs:
   environment-name:
     description: Environment Identifier (e.g. `cb2-1099`)
     required: true
+  environment-type: 
+    description: Type of environment (if required)
+    required: false
   terraform-version:
     description: The version of Terraform to use (defaults to 1.7.3)
     default: 1.7.3
@@ -63,6 +66,7 @@ runs:
         options: '-destroy'
         validate: 'false'
         environment-name: ${{ inputs.environment-name }}
+        encironment-type: ${{ inputs.environment-type }}
         terraform-version: ${{ inputs.terraform-version }}
         create-workspace: 'false'
         encryption-key: ${{ inputs.encryption-key }}
