@@ -8,6 +8,9 @@ inputs:
   output-summary:
     description: Output a summary of calculated values
     default: 'true'
+  translate:
+    description: Use new environment name standard
+    default: 'false'
 outputs:
   github-branch: 
     description: The GitHub Branch Name
@@ -28,6 +31,9 @@ runs:
     - name: Get Branch Name
       shell: bash
       id: branch
+      env: 
+        # Allow Translation of Environment
+        ENVIRONMENT_TRANSLATION: '{"feature":"feature", "develop":"dev", "integration":"int", "preprod":"prep", "prod":"prod"}'
       run: |
         # Get Environment and Branch information from provided input
         shopt -s extglob
@@ -45,14 +51,14 @@ runs:
             ;;
 
           ?(main))
-            environment_type=develop
-            environment_name=develop
+            environment_type=${{ case(fromJson(inputs.translate), fromJson(env.ENVIRONMENT_TRANSLATION)['develop'], 'develop') }}
+            environment_name=${environment_type}
             github_branch=$(echo ${{ inputs.environment }} | tr '[:upper:]' '[:lower:]')
             ;;
 
           ?(dev*|int*|pr*))
-            environment_type=${{ inputs.environment }}
-            environment_name=$(echo ${{ inputs.environment }} | tr '[:upper:]' '[:lower:]')
+            environment_type=${{ case(fromJson(inputs.translate), fromJson(env.ENVIRONMENT_TRANSLATION)[inputs.environment], inputs.environment) }}
+            environment_name=$(tr '[:upper:]' '[:lower:]' <<< ${environment_type})
             github_branch=$(echo ${{ inputs.environment }} | tr '[:upper:]' '[:lower:]')
             ;;
 
