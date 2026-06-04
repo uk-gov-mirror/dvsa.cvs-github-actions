@@ -1,0 +1,88 @@
+name: Create DB Schema
+description: Run a workflow in another repository with access to the Database
+
+inputs:
+  environment:
+    description: Environment
+    type: string
+    required: true
+  schema:
+    description: Schema Name
+    required: true
+  database:
+    description: Database Connection
+    required: true
+  drop-schema:
+    description: Drop Schema (to recreate)
+    default: false
+  repository:
+    description: Repository Name
+    default: cvs-devops
+  branch:
+    description: Branch to run Workflow from
+    required: false
+  workflow:
+    description: Workflow File
+    default: create-db-schema.yaml
+  dry-run:
+    description: Dry Run
+    default: false
+
+outputs:
+  schema: 
+    description: Schema Name
+    value: ${{ steps.schema.outputs.schema }}
+  service-name: 
+    description: Service Name
+    value: ${{ steps.schema.outputs.service-name }}
+
+runs:
+  using: composite
+  steps:
+    - name: Upload Configuration
+      uses: actions/upload-artifact@v7
+      with:
+        path: db/**
+        name: db
+
+    - name: Trigger Schema Creation
+      id: schema
+      shell: bash
+      run: |
+        # Generate Package
+        package=$(jq -nc '{environment: "${{ inputs.environment }}", schema: "${{ inputs.schema }}", database: "${{ inputs.database }}", "drop-schema": "${{ inputs.drop-schema }}", "dry-run": "${{ inputs.dry-run }}", "repository": "${{ github.repository}}", "workflow-id": "${{ github.run_id }}"}')
+
+        repository=${{ case(startsWith(inputs.repository, 'dvsa'), inputs.repository, format('dvsa/{0}', inputs.repository)) }}
+
+        # Trigger workflow
+        url=$(gh workflow run ${{ inputs.workflow }}${{ case(inputs.branch != '', format(' --ref {0}', inputs.branch), '') }} -R ${repository} --json <<< "${package}" | grep "https")
+        run=$(basename ${url})
+        
+        echo "Running ${{ inputs.workflow }} in ${{ inputs.repository }}"
+        echo "${url}"
+
+        # Wait for completion
+        while [ -z $(gh run view ${run} --json conclusion --jq '.conclusion' -R ${repository}) ]; do
+          sleep 5
+        done 
+
+        # Output Results
+        result=$(gh run view ${run} --json conclusion,status,databaseId,displayTitle,startedAt,url -R ${repository})
+        echo "**$(jq -r '.displayTitle' <<< $result)**" >> $GITHUB_STEP_SUMMARY
+        echo "**Status:** $(jq -r '.conclusion' <<< $result)" >> $GITHUB_STEP_SUMMARY
+        echo "**Schema:** ${{ inputs.schema }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Database:** ${{ inputs.database }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch:** ${{ inputs.branch }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Drop Existing Schema:** ${{ inputs.drop-schema }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Run Time:** $(jq -r '.startedAt' <<< $result)" >> $GITHUB_STEP_SUMMARY
+        echo "**Run ID:** $(jq -r '.databaseId' <<< $result)" >> $GITHUB_STEP_SUMMARY
+        echo "**Dry Run:** ${{ inputs.dry-run }}" >> $GITHUB_STEP_SUMMARY
+        echo "**URL:** $(jq -r '.url' <<< $result)" >> $GITHUB_STEP_SUMMARY
+
+        # Fail on error
+        success=( success skipped )
+        if ! [[ ${success} =~ "$(jq -r '.conclusion' <<< $result)" ]]; then
+          echo "Create Schema Failed"
+          exit 1
+        fi
