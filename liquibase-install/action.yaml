@@ -23,4 +23,4 @@ runs:
         sudo mkdir -p $GITHUB_WORKSPACE/liquibase/lib
         sudo curl -L https://downloads.mysql.com/archives/get/p/3/file/mysql-connector-j-${{ inputs.mysql_connector_java_version }}.tar.gz --output mysql-connector-j.tar.gz
         sudo tar -zxf mysql-connector-j.tar.gz
-        sudo mv mysql-connector-j-${{ inputs.mysql_connector_java_version }}/mysql-connector-j-${{ inputs.mysql_connector_java_version }}.jar $GITHUB_WORKSPACEliquibase/lib/
+        sudo mv mysql-connector-j-${{ inputs.mysql_connector_java_version }}/mysql-connector-j-${{ inputs.mysql_connector_java_version }}.jar $GITHUB_WORKSPACE/liquibase/lib/
