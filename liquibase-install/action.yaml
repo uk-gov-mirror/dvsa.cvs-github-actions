@@ -24,7 +24,7 @@ runs:
       shell: bash
       run: |
         echo "$GITHUB_WORKSPACE/liquibase" >> $GITHUB_PATH
-        sudo mkdir -p $GITHUB_WORKSPACE/liquibase/lib
-        sudo curl -L https://downloads.mysql.com/archives/get/p/3/file/mysql-connector-j-${{ inputs.mysql_connector_java_version }}.tar.gz --output mysql-connector-j.tar.gz
-        sudo tar -zxf mysql-connector-j.tar.gz
-        sudo mv -v mysql-connector-j-${{ inputs.mysql_connector_java_version }}/mysql-connector-j-${{ inputs.mysql_connector_java_version }}.jar $GITHUB_WORKSPACE/liquibase/lib/
+        mkdir -p $GITHUB_WORKSPACE/liquibase/lib
+        curl -L https://downloads.mysql.com/archives/get/p/3/file/mysql-connector-j-${{ inputs.mysql_connector_java_version }}.tar.gz --output mysql-connector-j.tar.gz
+        tar -zxf mysql-connector-j.tar.gz
+        mv -v mysql-connector-j-${{ inputs.mysql_connector_java_version }}/mysql-connector-j-${{ inputs.mysql_connector_java_version }}.jar $GITHUB_WORKSPACE/liquibase/lib/
