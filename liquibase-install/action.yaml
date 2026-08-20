@@ -4,10 +4,10 @@ description: Install Liquibase
 inputs:
   liquibase_version:
     description: Version of Liquibase to use
-    default: 4.23.0
+    default: 4.33.0
   mysql_connector_java_version:
     description: Version of MySQL Connector to use
-    default: 8.0.25
+    default: 8.0.33
 
 runs:
   using: composite
@@ -21,4 +21,5 @@ runs:
         unzip -o -d liquibase liquibase-${{ inputs.liquibase_version }}.zip
         echo "$GITHUB_WORKSPACE/liquibase" >> $GITHUB_PATH
         sudo mkdir -p /liquibase/lib
-        sudo curl -L https://repo1.maven.org/maven2/mysql/mysql-connector-java/${{ inputs.mysql_connector_java_version }}/mysql-connector-java-${{ inputs.mysql_connector_java_version }}.jar --output /liquibase/lib/mysql.jar
+        sudo curl -L https://downloads.mysql.com/archives/get/p/3/file/mysql-connector-j-${{ inputs.mysql_connector_java_version }}.tar.gz --output mysql-connector-j.tar.gz
+        sudo tar -zxf mysql-connector-j.tar.gz -C /liquibase/lib
