@@ -3,14 +3,14 @@ description: Perform a Terraform Plan
 
 inputs:
   options:
-    description: Additional Terraform Options 
+    description: Additional Terraform Options
   validate:
     description: Run a validation on the Terraform first
-    default: 'true'
+    default: "true"
   environment-name:
     description: Environment Identifier (e.g. `cb2-1099`)
     required: true
-  environment-type: 
+  environment-type:
     description: Type of environment (if required)
     required: false
   terraform-version:
@@ -18,13 +18,13 @@ inputs:
     default: 1.7.3
   plan-retention:
     description: Number of days to retain the plan
-    default: '5'
+    default: "5"
   create-workspace:
     description: Should a new Terraform Workspace be created
-    default: 'true'
+    default: "true"
   repository:
     description: The name of the repository
-    default: 'cvs-tf'
+    default: "cvs-tf"
   encryption-key:
     description: ARN of a KMS Key to use for Encryption
     required: false
@@ -32,10 +32,10 @@ inputs:
     description: API Key for InfraCost
   tfvars:
     description: Should a TFVARS file be used
-    default: 'false'
+    default: "false"
   backend:
     description: Use a custom Backend Configuration
-    default: 'false'
+    default: "false"
   working-directory:
     description: If the Terraform is not in the root of the folder, provide the working working directory
     required: false
@@ -58,7 +58,7 @@ runs:
   using: composite
   steps:
     - name: Initialize Terraform
-      uses: dvsa/cvs-github-actions/terraform-initialize@develop
+      uses: dvsa/cvs-github-actions/terraform-initialize@0404300da2236f763cdadea0cede1fef33529eb9
       with:
         terraform-version: ${{ inputs.terraform-version }}
         environment-name: ${{ inputs.environment-name }}
@@ -99,14 +99,14 @@ runs:
       with:
         action: encrypt
         encryption-key: ${{ inputs.encryption-key }}
-        file: ${{ format('{0}/terraform.tfplan', inputs.working-directory != '' && inputs.working-directory || '.') }} 
+        file: ${{ format('{0}/terraform.tfplan', inputs.working-directory != '' && inputs.working-directory || '.') }}
 
     - name: 📝 Upload Plan
       uses: actions/upload-artifact@v4.6.2
       with:
         name: ${{ inputs.artifact-name }}-${{ github.run_id }}
         path: |
-          ${{ format('{0}/terraform.tfplan{1}', inputs.working-directory != '' && inputs.working-directory || '.', inputs.encryption-key != '' && '.encrypted' || '') }} 
+          ${{ format('{0}/terraform.tfplan{1}', inputs.working-directory != '' && inputs.working-directory || '.', inputs.encryption-key != '' && '.encrypted' || '') }}
         retention-days: ${{ inputs.plan-retention }}
 
     # Run Infracost to get idea of cost changes
