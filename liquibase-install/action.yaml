@@ -18,11 +18,12 @@ runs:
       run: |
         # Install Liquibase
         curl -L https://github.com/liquibase/liquibase/releases/download/v${{ inputs.liquibase_version }}/liquibase-${{ inputs.liquibase_version }}.zip --output liquibase-${{ inputs.liquibase_version }}.zip
-        unzip -o -d liquibase liquibase-${{ inputs.liquibase_version }}.zip
+        unzip -oq -d liquibase liquibase-${{ inputs.liquibase_version }}.zip
     
     - name: Download MySQL connector
       shell: bash
       run: |
+        echo "$GITHUB_WORKSPACE/liquibase" >> $GITHUB_PATH
         sudo mkdir -p $GITHUB_WORKSPACE/liquibase/lib
         sudo curl -L https://downloads.mysql.com/archives/get/p/3/file/mysql-connector-j-${{ inputs.mysql_connector_java_version }}.tar.gz --output mysql-connector-j.tar.gz
         sudo tar -zxf mysql-connector-j.tar.gz
