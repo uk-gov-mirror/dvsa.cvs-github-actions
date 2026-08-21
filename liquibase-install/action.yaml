@@ -12,20 +12,18 @@ inputs:
 runs:
   using: composite
   steps:
-
     - name: Install Liquibase
       shell: bash
       run: |
         # Install Liquibase
         curl -L https://github.com/liquibase/liquibase/releases/download/v${{ inputs.liquibase_version }}/liquibase-${{ inputs.liquibase_version }}.zip --output liquibase-${{ inputs.liquibase_version }}.zip
         unzip -oq -d liquibase liquibase-${{ inputs.liquibase_version }}.zip
-    
+
     - name: Download MySQL connector
       shell: bash
       run: |
         echo "$GITHUB_WORKSPACE/liquibase" >> $GITHUB_PATH
-        mkdir -p $GITHUB_WORKSPACE/liquibase/lib
         curl -L https://downloads.mysql.com/archives/get/p/3/file/mysql-connector-j-${{ inputs.mysql_connector_java_version }}.tar.gz --output mysql-connector-j.tar.gz
         tar -zxf mysql-connector-j.tar.gz
-        cp mysql-connector-j-${{ inputs.mysql_connector_java_version }}/mysql-connector-j-${{ inputs.mysql_connector_java_version }}.jar $GITHUB_WORKSPACE/liquibase/lib/mysql.jar
-        mv -v mysql-connector-j-${{ inputs.mysql_connector_java_version }}/mysql-connector-j-${{ inputs.mysql_connector_java_version }}.jar $GITHUB_WORKSPACE/liquibase/lib/
+        sudo mkdir -p /liquibase/lib
+        sudo mv -v mysql-connector-j-${{ inputs.mysql_connector_java_version }}/mysql-connector-j-${{ inputs.mysql_connector_java_version }}.jar /liquibase/lib/mysql.jar
