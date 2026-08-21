@@ -3,7 +3,7 @@ description: Perform a Terraform Plan
 
 inputs:
   options:
-    description: Additional Terraform Options 
+    description: Additional Terraform Options
   run-id:
     description: Run Id for a Terraform Plan Artifact
     default: ${{ github.run_id }}
@@ -18,19 +18,19 @@ inputs:
     default: 1.7.3
   create-workspace:
     description: Should a new Terraform Workspace be created
-    default: 'true'
+    default: "true"
   repository:
     description: The name of the repository
-    default: 'cvs-tf'
+    default: "cvs-tf"
   encryption-key:
     description: ARN of a KMS Key to use for Encryption
     required: false
   tfvars:
     description: Should a TFVARS file be used
-    default: 'false'
+    default: "false"
   backend:
     description: Use a custom Backend Configuration
-    default: 'false'
+    default: "false"
   working-directory:
     description: If the Terraform is not in the root of the folder, provide the working working directory
     required: false
@@ -39,7 +39,7 @@ runs:
   using: composite
   steps:
     - name: Initialize Terraform
-      uses: dvsa/cvs-github-actions/terraform-initialize@feature/CB2-21969
+      uses: dvsa/cvs-github-actions/terraform-initialize@0404300da2236f763cdadea0cede1fef33529eb9
       with:
         terraform-version: ${{ inputs.terraform-version }}
         environment-name: ${{ inputs.environment-name }}
@@ -59,7 +59,7 @@ runs:
       with:
         action: decrypt
         encryption-key: ${{ inputs.encryption-key }}
-        file: ${{ format('{0}/terraform.tfplan', inputs.working-directory != '' && inputs.working-directory || '.') }} 
+        file: ${{ format('{0}/terraform.tfplan', inputs.working-directory != '' && inputs.working-directory || '.') }}
 
     - name: Terraform Apply
       shell: bash
@@ -68,4 +68,3 @@ runs:
         ${{ inputs.working-directory != '' && format('cd {0}', inputs.working-directory) || '' }}
         terraform apply ${{ inputs.options }} terraform.tfplan
         echo 'Terraform Applied ✅' >> $GITHUB_STEP_SUMMARY
-
