@@ -39,7 +39,7 @@ runs:
   using: composite
   steps:
     - name: Initialize Terraform
-      uses: dvsa/cvs-github-actions/terraform-initialize@develop
+      uses: dvsa/cvs-github-actions/terraform-initialize@feature/CB2-21969
       with:
         terraform-version: ${{ inputs.terraform-version }}
         environment-name: ${{ inputs.environment-name }}
