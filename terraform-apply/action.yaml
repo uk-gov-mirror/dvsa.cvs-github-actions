@@ -68,3 +68,5 @@ runs:
         ${{ inputs.working-directory != '' && format('cd {0}', inputs.working-directory) || '' }}
         terraform apply ${{ inputs.options }} terraform.tfplan
         echo 'Terraform Applied ✅' >> $GITHUB_STEP_SUMMARY
+        terraform state show
+        
