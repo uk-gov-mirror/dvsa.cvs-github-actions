@@ -85,6 +85,7 @@ runs:
         echo 'Plan Completed ✅' >> $GITHUB_STEP_SUMMARY
         plan_detail=$(terraform show -no-color terraform.tfplan | grep -E 'Plan:|Your infrastructure' || echo "No environment currently deployed")
         echo "${plan_detail}" >> $GITHUB_STEP_SUMMARY
+        terraform state show
 
         if [[ $(awk '{print index($0, "Plan:")}' <<< $plan_detail) > 0 ]]; then
           # Changes have been detected
@@ -126,4 +127,3 @@ runs:
         terraform show -json terraform.tfplan > plan.json
         infracost breakdown --path plan.json --format json --out-file breakdown.json
         infracost output --path breakdown.json --format github-comment >> $GITHUB_STEP_SUMMARY
-        terraform state show
